@@ -1,20 +1,37 @@
+"""
+Pydantic schemas cho Apartment
+"""
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class ApartmentBase(BaseModel):
-    apartmentID: str = Field(..., max_length=10)
-    buildingID: str | None = Field(default=None, max_length=10)
-    numResident: int = 0
+    """Base cho Apartment"""
+    apartmentID: str = Field(..., max_length=10,
+                             description="Mã căn hộ (VD: A101, B205)")
+    buildingID: str | None = Field(
+        default=None, max_length=10, description="Mã tòa nhà")
+    numResident: int = Field(default=0, ge=0, description="Số lượng cư dân")
 
 
 class ApartmentCreate(ApartmentBase):
-    pass
+    """Tạo Apartment mới"""
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "apartmentID": "A101",
+                "buildingID": "A",
+                "numResident": 0
+            }
+        }
 
 
 class ApartmentUpdate(BaseModel):
+    """Schema cho cập nhật Apartment"""
     buildingID: str | None = Field(default=None, max_length=10)
-    numResident: int | None = None
+    numResident: int | None = Field(default=None, ge=0)
 
 
 class ApartmentRead(ApartmentBase):
+    """Schema cho response Apartment"""
     model_config = ConfigDict(from_attributes=True)
