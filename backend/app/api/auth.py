@@ -7,7 +7,7 @@ from backend.app.core.security import create_access_token, decode_access_token
 from backend.app.models.account import Account
 from backend.app.schemas.auth import LoginRequest, LoginResponse, MeResponse, TokenData
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter()
 security = HTTPBearer()
 
 
