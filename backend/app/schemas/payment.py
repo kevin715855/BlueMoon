@@ -3,9 +3,8 @@ Pydantic schemas cho Payment Transaction và Transaction Detail
 """
 import datetime as dt
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field, Optional
-from typing import List
-
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict, Field
 
 class PaymentStatus(str, Enum):
     """Enum cho trạng thái thanh toán"""
@@ -13,6 +12,19 @@ class PaymentStatus(str, Enum):
     Success = "Success"
     Failed = "Failed"
 
+class PaymentCreateRequest(BaseModel):
+    """
+    Chỉ cần gửi danh sách ID hóa đơn.
+    Backend tự tính tiền để bảo mật.
+    """
+    bill_ids: List[int] = Field(..., description="Danh sách ID hóa đơn cần thanh toán", min_length=1)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "bill_ids": [10]
+            }
+        }
 
 # ==================== PAYMENT TRANSACTION ====================
 
