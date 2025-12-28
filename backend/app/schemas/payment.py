@@ -3,7 +3,7 @@ Pydantic schemas cho Payment Transaction và Transaction Detail
 """
 import datetime as dt
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, Optional
 from typing import List
 
 
@@ -184,3 +184,14 @@ class TransactionDetailRead(TransactionDetailBase):
     model_config = ConfigDict(from_attributes=True)
 
     detailID: int
+
+# ==================== SEPAY WEBHOOK SCHEMAS ====================
+class SePayTransactionData(BaseModel):
+    id: int
+    transaction_date: str
+    transaction_content: str
+    amount_in: str
+    reference_number: Optional[str] = None
+
+class SePayWebhookPayload(BaseModel):
+    transaction: SePayTransactionData
