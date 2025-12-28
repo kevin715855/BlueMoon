@@ -1,14 +1,13 @@
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 # IMPORT MODELS
-from app.models.bill import Bill
-from app.models.payment_transaction import PaymentTransaction 
-from app.models.transaction_detail import TransactionDetail
-
+from backend.app.models.bill import Bill
+from backend.app.models.payment_transaction import PaymentTransaction 
+from backend.app.models.transaction_detail import TransactionDetail
 # CONFIG
 BANK_ID = os.getenv("BANK_ID", "MB") 
 BANK_ACCOUNT = os.getenv("BANK_ACCOUNT", "")
@@ -92,7 +91,7 @@ class PaymentService:
     def process_sepay_webhook(db: Session, content: str, amount_in: float, gateway_id: str, transaction_date: str):
         """
         Input: Dữ liệu từ Webhook SePay
-        Output: Kết quả gạch nợ
+        Output: Kết quả giao dịch
         """
         print(f"WEBHOOK RECEIVED: {content} | Amount: {amount_in}")
 
@@ -100,8 +99,8 @@ class PaymentService:
         match = re.search(r"BM(\d+)", content, re.IGNORECASE)
         
         if not match:
-            # Trả về Success=False để SePay biết (hoặc True nếu muốn SePay ngừng spam)
-            return {"success": False, "message": "Không tìm thấy mã đơn hàng (BM...) trong nội dung"}
+            # Trả về Success=False để SePay biết
+            return {"success": False, "message": "Không tìm thấy mã đơn hàng trong nội dung"}
         
         trans_id = int(match.group(1))
 
@@ -113,13 +112,13 @@ class PaymentService:
 
         # 3. Kiểm tra Idempotency
         if transaction.status == 'Success':
-            return {"success": True, "message": "Giao dịch này đã được gạch nợ trước đó"}
+            return {"success": True, "message": "Giao dịch này đã được thực hiện"}
 
         # 4. Kiểm tra số tiền
         if float(amount_in) < float(transaction.amount):
              return {
                  "success": False, 
-                 "message": f"Thiếu tiền. Cần: {transaction.amount}, Nhận: {amount_in}"
+                 "message": f"Thanh toán không đủ. Cần: {transaction.amount}, Nhận: {amount_in}"
              }
 
         try:
@@ -138,10 +137,30 @@ class PaymentService:
                     bill.status = 'Paid'
             
             db.commit()
-            print(f"--> GẠCH NỢ THÀNH CÔNG: TransID {trans_id}")
-            return {"success": True, "message": "Gạch nợ thành công"}
+            print(f"--> Giao dịch thành công: TransID {trans_id}")
+            return {"success": True, "message": "Giao dịch thành công"}
 
         except Exception as e:
             db.rollback()
-            print(f"--> LỖI GẠCH NỢ: {e}")
+            print(f"--> Lỗi giao dịch: {e}")
             return {"success": False, "message": f"Lỗi Database: {str(e)}"}
+        
+    @staticmethod
+    def cancel_expired_transactions(db: Session):
+        time_threshold = datetime.now() - timedelta(minutes=15)
+        expired_transactions = db.query(PaymentTransaction).filter(
+            PaymentTransaction.status == "Pending",
+            PaymentTransaction.createdDate < time_threshold
+        ).all()
+
+        count = 0
+        for transaction in expired_transactions:
+            transaction.status = "Failed"
+            count += 1
+        
+        db.commit()
+        
+        return {
+            "message": f"Có {count} giao dịch quá hạn bị hủy.",
+            "canceled_count": count
+        }
