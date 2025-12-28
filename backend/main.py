@@ -1,21 +1,21 @@
-from app.api import payments
-from backend.app.models import Base
-from backend.app.core.db import get_engine
-from backend.app.api.auth import router as auth_router
-from sqlalchemy import text
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+# Load .env TRƯỚC KHI import các modules khác
 import os
 from pathlib import Path
-
-# Load .env TRƯỚC KHI import các modules khác
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
 _env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=_env_path, override=False)
 
-# Import sau khi load .env
+# Import module
+from sqlalchemy import text
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 
+# Import 
+from backend.app.api import payments, auth
+from backend.app.models import Base
+from backend.app.core.db import get_engine
 
 def _parse_cors_origins(value: str | None) -> list[str]:
     if not value:
@@ -70,9 +70,16 @@ def health() -> dict:
     return {"status": "healthy"}
 
 
-# Routers
-app.include_router(auth_router)  # Authentication: login, me, logout
-app = FastAPI()
+# Auth Router (Login, Register)
+app.include_router(
+    auth.router, 
+    prefix="/api/auth", 
+    tags=["Authentication"]
+)  # Authentication: login, me, logout
 
-# Đăng ký router
-app.include_router(payments.router, prefix="/api/payments", tags=["Payments"])
+# Online Payment Router
+app.include_router(
+    payments.router, 
+    prefix="/api/payments", 
+    tags=["Online Payments"]
+)
