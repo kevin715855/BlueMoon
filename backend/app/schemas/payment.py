@@ -98,7 +98,7 @@ class TransactionDetailCreate(TransactionDetailBase):
 class TransactionDetailRead(TransactionDetailBase):
     """Schema cho response Transaction Detail"""
     model_config = ConfigDict(from_attributes=True)
-
+    detailID: int
 
 # ==================== COMPLEX PAYMENT ====================
 
@@ -178,12 +178,6 @@ class MarkPaymentSuccessResponse(BaseModel):
 
 class TransactionDetailUpdate(BaseModel):
     amount: int | None = None
-
-
-class TransactionDetailRead(TransactionDetailBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    detailID: int
 
 # ==================== SEPAY WEBHOOK SCHEMAS ====================
 class SePayTransactionData(BaseModel):
