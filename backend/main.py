@@ -1,20 +1,19 @@
+from backend.app.models import Base
+from backend.app.core.db import get_engine
+from backend.app.api.auth import router as auth_router
+from sqlalchemy import text
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
-
-# Load local .env if present (does not override existing env vars)
+# Load .env TRƯỚC KHI import các modules khác
 from dotenv import load_dotenv
-
-from backend.app.api.auth import router as auth_router
-from backend.app.core.db import get_engine
-from backend.app.models import Base
-
 
 _env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=_env_path, override=False)
+
+# Import sau khi load .env
 
 
 def _parse_cors_origins(value: str | None) -> list[str]:

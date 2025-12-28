@@ -17,7 +17,8 @@ def get_secret_key() -> str:
     """Lấy SECRET_KEY cho JWT từ environment variable"""
     key = os.getenv("SECRET_KEY")
     if not key:
-        return get_secret_key()
+        raise RuntimeError(
+            "Không tìm thấy SECRET_KEY. Hãy cấu hình trong backend/.env")
     return key.strip()
 
 
