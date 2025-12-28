@@ -71,4 +71,4 @@ def health() -> dict:
 
 
 # Routers
-app.include_router(auth_router)
+app.include_router(auth_router)  # Authentication: login, me, logout

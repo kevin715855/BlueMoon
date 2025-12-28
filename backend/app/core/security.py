@@ -14,11 +14,6 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 def create_access_token(username: str, role: str) -> str:
     """
     Tạo JWT token cho user
-
-    Args:
-        username: Username của user
-        role: Role của user (BUILDING_MANAGER, ACCOUNTANT, RESIDENT)
-
     Returns:
         JWT token string
     """
@@ -35,12 +30,7 @@ def create_access_token(username: str, role: str) -> str:
 def decode_access_token(token: str) -> dict | None:
     """
     Decode và verify JWT token
-
-    Args:
-        token: JWT token string
-
-    Returns:
-        Dict chứa username và role nếu token hợp lệ, None nếu invalid
+    Trả về Dict chứa username và role nếu token hợp lệ, None nếu invalid
     """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

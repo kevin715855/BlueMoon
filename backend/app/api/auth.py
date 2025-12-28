@@ -26,14 +26,13 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
             detail="Username và password là bắt buộc"
         )
 
-    # Query user từ database bằng ORM
-    # Note: Database đang lưu password dạng plaintext
+    # Query user từ db để kiểm tra
     user = db.query(Account).filter(
         Account.username == payload.username,
         Account.password == payload.password
     ).first()
 
-    # Kiểm tra kết quả
+    # Không có user
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -47,7 +46,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
         role=str(user.role)
     )
 
-    # Return response
+    # Trả về response
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
@@ -60,17 +59,9 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> TokenData:
     """
-    Dependency để lấy thông tin user hiện tại từ JWT token
+    Muốn lấy thông tin user hiện tại từ JWT token, sử dụng dependency này.
 
-    Sử dụng trong các endpoint cần authentication:
-    ```python
-    @router.get("/protected")
-    def protected_route(current_user: TokenData = Depends(get_current_user)):
-        return {"username": current_user.username, "role": current_user.role}
-    ```
-
-    **Raises**:
-    - `401`: Token không hợp lệ hoặc đã hết hạn
+    Err `401`: Token không hợp lệ hoặc đã hết hạn
     """
     token = credentials.credentials
     payload = decode_access_token(token)
@@ -98,13 +89,9 @@ def get_current_user(
 @router.get("/me", response_model=MeResponse, summary="Lấy thông tin user hiện tại")
 def get_me(current_user: TokenData = Depends(get_current_user)) -> MeResponse:
     """
-    Lấy thông tin của user hiện tại (đã authenticated)
+    Lấy thông tin của user hiện tại (đã auth)
 
-    **Requires**: Bearer token trong header `Authorization: Bearer <token>`
-
-    **Returns**:
-    - `username`: Username của user
-    - `role`: Role của user
+    Trả về username và role.
     """
     return MeResponse(
         username=current_user.username,
