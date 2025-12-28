@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 # IMPORT MODELS
 from app.models.bill import Bill
-from app.models.transaction import PaymentTransaction 
+from app.models.payment_transaction import PaymentTransaction 
 from app.models.transaction_detail import TransactionDetail
 
 # CONFIG
