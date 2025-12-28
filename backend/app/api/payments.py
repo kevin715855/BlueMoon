@@ -2,18 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
-from backend.app.schemas.payment import PaymentTransactionCreate, SePayWebhookPayload
+from backend.app.schemas.payment import PaymentCreateRequest, SePayWebhookPayload
 from backend.app.services.payment_service import PaymentService
 
 # Import Auth
-from app.api.auth import get_current_user
-from app.schemas.auth import TokenData
-from app.models.account import Account
+from backend.app.api.auth import get_current_user
+from backend.app.schemas.auth import TokenData
+from backend.app.models.account import Account
 router = APIRouter()
 
 @router.post("/create-qr", summary="Create QR")
 def create_qr_code(
-    payload: PaymentTransactionCreate,
+    payload: PaymentCreateRequest,
     db: Session = Depends(get_db),
     token_data: TokenData = Depends(get_current_user)
 ):
@@ -28,7 +28,7 @@ def create_qr_code(
     
     return PaymentService.create_qr_transaction(
         db=db,
-        user_id=user.residentID,
+        user_id=user.resident[0].residentID,
         bill_ids=payload.bill_ids
     )
 
@@ -46,3 +46,13 @@ def receive_sepay_webhook(
         gateway_id=str(data.id),               # ID giao dịch phía SePay
         transaction_date=data.transaction_date # Ngày giờ giao dịch
     )
+
+@router.post("/check-expiry", summary="Quét và hủy giao dịch quá hạn")
+def check_expired_transactions(
+    db: Session = Depends(get_db),
+):
+    try:
+        result = PaymentService.cancel_expired_transactions(db)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
