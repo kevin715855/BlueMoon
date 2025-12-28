@@ -8,14 +8,14 @@ _env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=_env_path, override=False)
 
 # Import module
-from sqlalchemy import text
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+from sqlalchemy import text  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
 
 # Import 
-from backend.app.api import payments, auth
-from backend.app.models import Base
-from backend.app.core.db import get_engine
+from backend.app.api import payments, auth  # noqa: E402
+from backend.app.models import Base  # noqa: E402
+from backend.app.core.db import get_engine  # noqa: E402
 
 def _parse_cors_origins(value: str | None) -> list[str]:
     if not value:
