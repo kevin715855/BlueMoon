@@ -4,7 +4,7 @@ from typing import List
 
 from backend.app.core.db import get_db
 from backend.app.models.apartment import Apartment
-from backend.app.schemas.apartment import ApartmentCreate, ApartmentBase, ApartmentRead
+from backend.app.schemas.apartment import ApartmentCreate, ApartmentBase
 
 router = APIRouter()
 
