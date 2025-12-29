@@ -26,6 +26,25 @@ class PaymentCreateRequest(BaseModel):
             }
         }
 
+
+class OfflinePaymentRequest(BaseModel):
+    """Schema cho thanh toán ngoại tuyến nhiều hóa đơn (offline payment)"""
+    residentID: int = Field(..., description="ID cư dân")
+    paymentContent: str = Field(..., max_length=50, description="Nội dung thanh toán")
+    paymentMethod: str = Field(default="Offline", max_length=20, description="Phương thức thanh toán")
+    bill_ids: List[int] = Field(..., description="Danh sách ID hóa đơn cần thanh toán", min_length=1)
+
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "residentID": 1,
+                "paymentContent": "Thanh toán hóa đơn tháng 1, 2",
+                "paymentMethod": "Offline",
+                "bill_ids": [10, 11]
+            }
+        }
+
 # ==================== PAYMENT TRANSACTION ====================
 
 class PaymentTransactionBase(BaseModel):
