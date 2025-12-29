@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 
 # Import 
-from backend.app.api import payments, auth  # noqa: E402
+from backend.app.api import online_payments, auth  # noqa: E402
 from backend.app.models import Base  # noqa: E402
 from backend.app.core.db import get_engine  # noqa: E402
 
@@ -78,7 +78,7 @@ app.include_router(
 
 # Online Payment Router
 app.include_router(
-    payments.router, 
+    online_payments.router, 
     prefix="/api/payments", 
     tags=["Online Payments"]
 )
