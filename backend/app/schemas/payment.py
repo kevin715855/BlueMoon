@@ -3,9 +3,8 @@ Pydantic schemas cho Payment Transaction và Transaction Detail
 """
 import datetime as dt
 from enum import Enum
+from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List
-
 
 class PaymentStatus(str, Enum):
     """Enum cho trạng thái thanh toán"""
@@ -13,6 +12,19 @@ class PaymentStatus(str, Enum):
     Success = "Success"
     Failed = "Failed"
 
+class PaymentCreateRequest(BaseModel):
+    """
+    Chỉ cần gửi danh sách ID hóa đơn.
+    Backend tự tính tiền để bảo mật.
+    """
+    bill_ids: List[int] = Field(..., description="Danh sách ID hóa đơn cần thanh toán", min_length=1)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "bill_ids": [10]
+            }
+        }
 
 # ==================== PAYMENT TRANSACTION ====================
 
@@ -98,7 +110,7 @@ class TransactionDetailCreate(TransactionDetailBase):
 class TransactionDetailRead(TransactionDetailBase):
     """Schema cho response Transaction Detail"""
     model_config = ConfigDict(from_attributes=True)
-
+    detailID: int
 
 # ==================== COMPLEX PAYMENT ====================
 
@@ -179,8 +191,13 @@ class MarkPaymentSuccessResponse(BaseModel):
 class TransactionDetailUpdate(BaseModel):
     amount: int | None = None
 
+# ==================== SEPAY WEBHOOK SCHEMAS ====================
+class SePayTransactionData(BaseModel):
+    id: int
+    transaction_date: str
+    transaction_content: str
+    amount_in: str
+    reference_number: Optional[str] = None
 
-class TransactionDetailRead(TransactionDetailBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    detailID: int
+class SePayWebhookPayload(BaseModel):
+    transaction: SePayTransactionData

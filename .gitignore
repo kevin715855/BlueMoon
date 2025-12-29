@@ -1,23 +1,34 @@
-database/
-docs/
-.env
-backend/.env
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
-.venv/
+*.pyc
+
+# Virtual Environment (Môi trường ảo)
 venv/
-ENV/
 env/
+.env
+
+# IDE settings
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
+
+# Dataset & Large files (Tránh đẩy video test và file model nặng lên git)
+*.mp4
+*.avi
+*.jpg
+*.png
+datasets/
+runs/
+*.pt
+*.onnx
+*.csv
+*.gz
+*.docx
+
 .DS_Store
 Thumbs.db
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
+*.db
+*.sqlite3
+*.mdf
+*.ldf
+*.log
+

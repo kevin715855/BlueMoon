@@ -61,7 +61,7 @@ backend/
 1. Tạo file router trong `app/api/`
 2. Import dependencies (FastAPI, SQLAlchemy, schemas)
 3. Đăng ký router vào `main.py`
-4. Test trên Swagger UI (`/docs`)
+4. Test trên Swagger UI (`http://127.0.0.1:8000/docs`)
 
 ### Ví dụ: CRUD cơ bản
 
