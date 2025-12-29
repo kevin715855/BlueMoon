@@ -20,7 +20,7 @@ def get_residents(
     residents = db.query(Resident).offset(skip).limit(limit).all()
     return residents
 
-@router.post("/residents", response_model=  ResidentBase, status_code=status.HTTP_201_CREATED)
+@router.post("/add-new-resident", response_model=  ResidentBase, status_code=status.HTTP_201_CREATED)
 def create_resident(
     resident_in: ResidentCreate, 
     db: Session = Depends(get_db)
