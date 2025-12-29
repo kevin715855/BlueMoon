@@ -98,9 +98,8 @@ def get_me(current_user: TokenData = Depends(get_current_user)) -> MeResponse:
         role=current_user.role
     )
 
-@router.get("/admin", response_model=MeResponse, summary="Lấy thông tin accountant hiện tại")
 def get_current_accountant(current_user = Depends(get_current_user)):
-    allowed_roles = ["Accountant"] 
+    allowed_roles = ["Accountant", "Admin", "Manager"] 
     
     if current_user.role not in allowed_roles:
         raise HTTPException(
