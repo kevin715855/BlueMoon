@@ -12,9 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 
 # Import 
-from backend.app.api import online_payments, auth  # noqa: E402
 from backend.app.models import Base  # noqa: E402
 from backend.app.core.db import get_engine  # noqa: E402
+from backend.app.api import online_payments, auth, residents, apartments  # noqa: E402
 
 def _parse_cors_origins(value: str | None) -> list[str]:
     if not value:
@@ -81,4 +81,17 @@ app.include_router(
     online_payments.router, 
     prefix="/api/payments", 
     tags=["Online Payments"]
+)
+
+# Residents and Apartments Router
+app.include_router(
+    residents.router, 
+    prefix="/api/residents", 
+    tags=["Residents"]
+)
+
+app.include_router(
+    apartments.router, 
+    prefix="/api/apartments", 
+    tags=["Apartments"]
 )
