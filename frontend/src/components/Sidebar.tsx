@@ -1,18 +1,16 @@
-import { Building2, LayoutDashboard, Home, Users, CreditCard, Bell, Shield } from 'lucide-react';
+import { Building2, LayoutDashboard, Home, Users, CreditCard, Shield } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  notificationCount?: number;
 }
 
-export function Sidebar({ activeTab, onTabChange, notificationCount = 0 }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'apartments', label: 'Apartments', icon: Home },
     { id: 'residents', label: 'Residents', icon: Users },
     { id: 'payments', label: 'Payments', icon: CreditCard },
-    { id: 'notifications', label: 'Notifications', icon: Bell, badge: notificationCount },
     { id: 'admin', label: 'Admin', icon: Shield },
   ];
 
@@ -31,7 +29,7 @@ export function Sidebar({ activeTab, onTabChange, notificationCount = 0 }: Sideb
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+
           return (
             <button
               key={item.id}
@@ -44,11 +42,6 @@ export function Sidebar({ activeTab, onTabChange, notificationCount = 0 }: Sideb
             >
               <Icon className="w-5 h-5" />
               <span>{item.label}</span>
-              {item.badge && item.badge > 0 && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  {item.badge}
-                </span>
-              )}
             </button>
           );
         })}

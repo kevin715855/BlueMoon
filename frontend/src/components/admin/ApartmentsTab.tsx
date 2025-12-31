@@ -30,7 +30,7 @@ export function ApartmentsTab({ apartments, residents, loading = false }: Apartm
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left py-4 px-6 text-gray-700">Apartment ID</th>
-                  <th className="text-left py-4 px-6 text-gray-700">Area</th>
+                  <th className="text-left py-4 px-6 text-gray-700">Number of residents</th>
                   <th className="text-left py-4 px-6 text-gray-700">Building</th>
                   <th className="text-left py-4 px-6 text-gray-700">Status</th>
                 </tr>

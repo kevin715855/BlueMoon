@@ -37,6 +37,19 @@ export interface Resident {
   username?: string;
 }
 
+export interface Bill {
+  billID: number;
+  apartmentID?: string;
+  accountantID?: number;
+  createDate?: string;
+  deadline?: string;
+  typeOfBill?: string;
+  amount?: number;
+  total?: number;
+  status: "Unpaid" | "Paid" | "Overdue";
+  paymentMethod?: string;
+}
+
 export interface PaymentTransaction {
   transID: number;
   residentID: number;
@@ -186,6 +199,14 @@ export const api = {
         body: JSON.stringify(resident),
       });
     },
+  },
+
+  bills: {
+    getAll: async (): Promise<Bill[]> => {
+      return fetchApi<Bill[]>("/bills/my-bills", {
+        method: "GET",
+      });
+    }
   },
 
   // Payments (Online Payments via QR)
