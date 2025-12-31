@@ -219,3 +219,29 @@ class SePayTransactionData(BaseModel):
 
 class SePayWebhookPayload(BaseModel):
     transaction: SePayTransactionData
+
+# ==================== RECEIPT SCHEMAS ====================
+class ReceiptBillDetail(BaseModel):
+    """Chi tiết hóa đơn trong biên lai"""
+    billID: int
+    billName: str
+    amount: float
+    dueDate: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ReceiptResponse(BaseModel):
+    """Schema cho biên lai thanh toán"""
+    transID: int
+    residentID: int
+    residentName: str
+    apartmentID: str
+    phoneNumber: str | None
+    totalAmount: float
+    paymentMethod: str
+    paymentContent: str | None
+    status: str
+    payDate: str
+    bills: list[ReceiptBillDetail]
+    
+    model_config = ConfigDict(from_attributes=True)

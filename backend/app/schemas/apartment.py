@@ -13,17 +13,6 @@ class ApartmentBase(BaseModel):
     numResident: int = Field(default=0, ge=0, description="Số lượng cư dân")
 
 
-class ApartmentCreate(ApartmentBase):
-    """Tạo Apartment mới"""
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "apartmentID": "A101",
-                "buildingID": "A",
-                "numResident": 0
-            }
-        }
 
 
 class ApartmentUpdate(BaseModel):

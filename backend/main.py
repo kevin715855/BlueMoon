@@ -14,7 +14,7 @@ from fastapi import FastAPI  # noqa: E402
 # Import 
 from backend.app.models import Base  # noqa: E402
 from backend.app.core.db import get_engine  # noqa: E402
-from backend.app.api import account, online_payments, auth, residents, apartments, bills, payments, offline_payments, building_managers, accountants  # noqa: E402
+from backend.app.api import account, online_payments, auth, residents, apartments, bills, payments, offline_payments, building_managers, accountants, receipts  # noqa: E402
 
 def _parse_cors_origins(value: str | None) -> list[str]:
     if not value:
@@ -111,24 +111,37 @@ app.include_router(
     tags=["Apartments"]
 )
 
-# Online Payment Router
-app.include_router(
-    online_payments.router, 
-    prefix="/api/payments", 
-    tags=["Online Payments"]
-)
-
-# Offline Payment Router
+# Bills Router
 app.include_router(
     bills.router,
     prefix="/api/bills",
-    tags=["Resident-Bills"]
+    tags=["Bills"]
+)
+
+# Payment Routes
+app.include_router(
+    online_payments.router, 
+    prefix="/api/online-payments", 
+    tags=["Online Payments"]
+)
+
+app.include_router(
+    offline_payments.router,
+    prefix="/api/offline-payments",
+    tags=["Offline Payments"]
 )
 
 app.include_router(
     payments.router,
     prefix="/api/payments",
-    tags=["Resident-Payments"]
+    tags=["Payment History"]
+)
+
+# Receipts Router
+app.include_router(
+    receipts.router,
+    prefix="/api/receipts",
+    tags=["Receipts"]
 )
 
 
