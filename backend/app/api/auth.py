@@ -99,7 +99,7 @@ def get_me(current_user: TokenData = Depends(get_current_user)) -> MeResponse:
     )
 
 def get_current_accountant(current_user = Depends(get_current_user)):
-    allowed_roles = ["Accountant", "Admin", "Manager"] 
+    allowed_roles = ["Accountant", "Admin"] 
     
     if current_user.role not in allowed_roles:
         raise HTTPException(
@@ -108,3 +108,15 @@ def get_current_accountant(current_user = Depends(get_current_user)):
         )
     
     return current_user
+
+def get_current_manager(current_user = Depends(get_current_user)):
+    allowed_roles = ["Manager", "Admin"] 
+    
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền thực hiện thao tác này"
+        )
+    
+    return current_user
+
