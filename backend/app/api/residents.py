@@ -13,10 +13,10 @@ from backend.app.api.auth import get_only_admin
 
 router = APIRouter()
 
-@router.get("/get-residents-data", response_model=List[ResidentBase])
+@router.get("/get-residents-data", response_model=List[ResidentRead])
 def get_residents(
-    skip: int = 0, 
-    limit: int = 100, 
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     current_accountant = Depends(get_current_accountant)
 ):
@@ -26,7 +26,7 @@ def get_residents(
 
 @router.post("/add-new-resident", response_model=ResidentBase, status_code=status.HTTP_201_CREATED)
 def create_resident(
-    resident_in: ResidentCreate, 
+    resident_in: ResidentCreate,
     db: Session = Depends(get_db),
     current_accountant = Depends(get_current_accountant)
 ):
@@ -41,20 +41,20 @@ def create_resident(
         db.commit()
         db.refresh(new_resident)
         return new_resident
-        
+
     except IntegrityError as e:
         db.rollback()
-        
-        print(f"DEBUG ERROR: {e}") 
+
+        print(f"DEBUG ERROR: {e}")
         error_msg = str(e.orig)
         if "FK_Resident_User" in error_msg:
              raise HTTPException(
-                 status_code=400, 
+                 status_code=400,
                  detail=f"Tài khoản '{resident_in.username}' chưa tồn tại. Vui lòng tạo tài khoản trước."
              )
-        
+
         raise HTTPException(status_code=400, detail=f"Lỗi Database: {error_msg}")
-    
+
 @router.get("/resident_detail", response_model=ResidentRead)
 def get_resident_detail(
     fullname: str,
@@ -68,13 +68,13 @@ def get_resident_detail(
     ).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
-    
+
     return resident
 
 
 @router.put("/{id}", response_model=ResidentRead)
 def update_resident(
-    id: int, 
+    id: int,
     resident_in: ResidentUpdate,
     db: Session = Depends(get_db),
     admin = Depends(get_only_admin)
@@ -84,7 +84,7 @@ def update_resident(
         raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
 
     update_data = resident_in.dict(exclude_unset=True)
-    
+
     for key, value in update_data.items():
         setattr(resident, key, value)
 
@@ -94,7 +94,7 @@ def update_resident(
     except IntegrityError:
         db.rollback()
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail="Cập nhật thất bại.Thông tin bị trùng lặp."
         )
 
@@ -102,7 +102,7 @@ def update_resident(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_resident(
-    id: int, 
+    id: int,
     db: Session = Depends(get_db),
     admin = Depends(get_only_admin)
 ):

@@ -48,7 +48,10 @@ export function useAuth() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.auth.login(username, password);
+
+      let hashedPassword = password;
+
+      const response = await api.auth.login(username, hashedPassword);
       setUser({
         username: response.username,
         role: response.role,
