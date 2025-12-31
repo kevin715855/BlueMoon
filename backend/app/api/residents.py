@@ -3,11 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 from sqlalchemy.exc import IntegrityError
 
-from backend.app.core.db import get_db
 from backend.app.models.resident import Resident
-from backend.app.schemas.resident import ResidentBase, ResidentCreate
+from backend.app.schemas.resident import ResidentBase, ResidentCreate, ResidentRead, ResidentUpdate
 from backend.app.models.apartment import Apartment
+
+from backend.app.core.db import get_db
 from backend.app.api.auth import get_current_accountant
+from backend.app.api.auth import get_only_admin
 
 router = APIRouter()
 
@@ -52,3 +54,62 @@ def create_resident(
              )
         
         raise HTTPException(status_code=400, detail=f"Lỗi Database: {error_msg}")
+    
+@router.get("/resident_detail", response_model=ResidentRead)
+def get_resident_detail(
+    fullname: str,
+    apartment_id: str,
+    db: Session = Depends(get_db),
+    admin = Depends(get_only_admin)
+):
+    resident = db.query(Resident).filter(
+        Resident.apartmentID==apartment_id,
+        Resident.fullName==fullname
+    ).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
+    
+    return resident
+
+
+@router.put("/{id}", response_model=ResidentRead)
+def update_resident(
+    id: int, 
+    resident_in: ResidentUpdate,
+    db: Session = Depends(get_db),
+    admin = Depends(get_only_admin)
+):
+    resident = db.query(Resident).filter(Resident.residentID == id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
+
+    update_data = resident_in.dict(exclude_unset=True)
+    
+    for key, value in update_data.items():
+        setattr(resident, key, value)
+
+    try:
+        db.commit()
+        db.refresh(resident)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400, 
+            detail="Cập nhật thất bại.Thông tin bị trùng lặp."
+        )
+
+    return resident
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_resident(
+    id: int, 
+    db: Session = Depends(get_db),
+    admin = Depends(get_only_admin)
+):
+    resident = db.query(Resident).filter(Resident.residentID == id).first()
+    if not resident:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
+
+    db.delete(resident)
+    db.commit()
+    return None

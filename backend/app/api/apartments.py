@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.app.core.db import get_db
 from backend.app.models.apartment import Apartment
-from backend.app.schemas.apartment import ApartmentCreate, ApartmentBase
+from backend.app.schemas.apartment import ApartmentCreate, ApartmentBase, ApartmentRead
+
+from backend.app.core.db import get_db
 from backend.app.api.auth import get_current_accountant
+from backend.app.api.auth import get_only_admin
 
 router = APIRouter()
 
@@ -37,4 +39,14 @@ def create_apartment(
     db.refresh(new_apartment)
     return new_apartment
 
-
+@router.get("/{id}", response_model=ApartmentRead)
+def get_apartment_detail(
+    id: str, 
+    db: Session = Depends(get_db),
+    admin = Depends(get_only_admin)
+):
+    apartment = db.query(Apartment).filter(Apartment.apartmentID == id).first()
+    if not apartment:
+        raise HTTPException(status_code=404, detail="Không tìm thấy căn hộ")
+    
+    return apartment
