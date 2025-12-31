@@ -35,22 +35,12 @@ class BillCreate(BaseModel):
     deadline: dt.date = Field(..., description="Hạn thanh toán (bắt buộc)")
     typeOfBill: str = Field(..., max_length=50, description="Loại hóa đơn")
     amount: float = Field(..., gt=0, description="Số tiền gốc phải > 0")
-    total: float = Field(..., gt=0, description="Tổng tiền phải > 0")
-
+    
     @field_validator('deadline')
     @classmethod
     def validate_deadline(cls, v):
         if v < dt.date.today():
             raise ValueError('Deadline không thể là ngày quá khứ')
-        return v
-
-    @field_validator('total')
-    @classmethod
-    def validate_total(cls, v, info):
-        # Total phải >= amount
-        amount = info.data.get('amount')
-        if amount and v < amount:
-            raise ValueError('Total phải >= amount')
         return v
 
     class Config:
@@ -61,7 +51,6 @@ class BillCreate(BaseModel):
                 "deadline": "2025-02-01",
                 "typeOfBill": "Phí quản lý",
                 "amount": 500000,
-                "total": 550000
             }
         }
 

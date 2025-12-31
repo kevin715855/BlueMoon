@@ -100,3 +100,9 @@ app.include_router(
     prefix="/api/apartments", 
     tags=["Apartments"]
 )
+
+app.include_router(
+    accounting.router, 
+    prefix="/api/accounting", 
+    tags=["Accounting"],
+)
