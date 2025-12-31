@@ -13,7 +13,7 @@ from backend.app.api.auth import get_only_admin
 
 router = APIRouter()
 
-@router.get("/get-residents-data", response_model=List[ResidentBase])
+@router.get("/get-residents-data", response_model=List[ResidentRead])
 def get_residents(
     skip: int = 0, 
     limit: int = 100, 

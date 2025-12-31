@@ -18,7 +18,7 @@ def create_qr_code(
     token_data: TokenData = Depends(get_current_user)
 ):
     
-    user = db.query(Account).filter(Account.username == token_data.username).first()
+    user = db.query(Account).filter(Account.username==token_data.username).first()
     
     if not user:
         raise HTTPException(
