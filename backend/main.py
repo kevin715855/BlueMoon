@@ -14,7 +14,7 @@ from fastapi import FastAPI  # noqa: E402
 # Import 
 from backend.app.models import Base  # noqa: E402
 from backend.app.core.db import get_engine  # noqa: E402
-from backend.app.api import online_payments, auth, residents, apartments, bills, payments, offline_payments  # noqa: E402
+from backend.app.api import account, online_payments, auth, residents, apartments, bills, payments, offline_payments, building_managers, accountants  # noqa: E402
 
 def _parse_cors_origins(value: str | None) -> list[str]:
     if not value:
@@ -76,6 +76,41 @@ app.include_router(
     tags=["Authentication"]
 )  # Authentication: login, me, logout
 
+# Account Router
+app.include_router(
+    account.router,
+    prefix="/api/accounts",
+    tags=["Accounts"]
+)
+
+# Residents Router
+app.include_router(
+    residents.router, 
+    prefix="/api/residents", 
+    tags=["Residents"]
+)
+
+# Building Managers Router
+app.include_router(
+    building_managers.router,
+    prefix="/api/building-managers",
+    tags=["Building Managers"]
+)
+
+# Accountants Router
+app.include_router(
+    accountants.router,
+    prefix="/api/accountants",
+    tags=["Accountants"]
+)
+
+# Apartments Router
+app.include_router(
+    apartments.router, 
+    prefix="/api/apartments", 
+    tags=["Apartments"]
+)
+
 # Online Payment Router
 app.include_router(
     online_payments.router, 
@@ -83,19 +118,7 @@ app.include_router(
     tags=["Online Payments"]
 )
 
-# Residents and Apartments Router
-app.include_router(
-    residents.router, 
-    prefix="/api/residents", 
-    tags=["Residents"]
-)
-
-app.include_router(
-    apartments.router, 
-    prefix="/api/apartments", 
-    tags=["Apartments"]
-)
-
+# Offline Payment Router
 app.include_router(
     bills.router,
     prefix="/api/bills",
@@ -107,3 +130,6 @@ app.include_router(
     prefix="/api/payments",
     tags=["Resident-Payments"]
 )
+
+
+

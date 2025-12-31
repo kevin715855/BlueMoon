@@ -1,21 +1,46 @@
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
 # Virtual Environment (Môi trường ảo)
 venv/
 env/
 .env
+.venv/
+
+# Node modules
+node_modules/
+frontend/node_modules/
+package-lock.json
+frontend/package-lock.json
 
 # IDE settings
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# Documentation & PDFs (Tài liệu học tập, assignment)
+docs/
+*.pdf
+
+# Database files
+*.db
+*.sqlite3
+*.mdf
+*.ldf
+database/diagram.pdf
 
 # Dataset & Large files (Tránh đẩy video test và file model nặng lên git)
 *.mp4
 *.avi
 *.jpg
 *.png
+*.jpeg
+*.gif
 datasets/
 runs/
 *.pt
@@ -23,12 +48,18 @@ runs/
 *.csv
 *.gz
 *.docx
+*.xlsx
+*.ppt
+*.pptx
 
+# OS generated files
 .DS_Store
 Thumbs.db
-*.db
-*.sqlite3
-*.mdf
-*.ldf
 *.log
 
+# Python distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl

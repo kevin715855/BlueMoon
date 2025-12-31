@@ -108,13 +108,12 @@ class TransactionDetailBase(BaseModel):
     """Base schema cho Transaction Detail"""
     transID: int = Field(..., description="ID giao dịch")
     billID: int = Field(..., description="ID hóa đơn được thanh toán")
-    amount: float | None = Field(
-        default=None, ge=0, description="Số tiền thanh toán cho bill này")
+    amount: float = Field(..., ge=0, description="Số tiền thanh toán cho bill này")
 
 
 class TransactionDetailCreate(TransactionDetailBase):
     """Schema cho tạo Transaction Detail (dùng sp_add_transaction_detail)"""
-    amount: float = Field(..., gt=0, description="Số tiền phải > 0")
+    pass
 
     class Config:
         json_schema_extra = {
