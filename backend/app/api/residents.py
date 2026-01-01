@@ -8,8 +8,7 @@ from backend.app.schemas.resident import ResidentBase, ResidentCreate, ResidentR
 from backend.app.models.apartment import Apartment
 
 from backend.app.core.db import get_db
-from backend.app.api.auth import get_current_accountant
-from backend.app.api.auth import get_only_admin
+from backend.app.api.auth import get_current_accountant, get_only_admin, get_current_manager
 
 router = APIRouter()
 
@@ -18,7 +17,7 @@ def get_residents(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_accountant = Depends(get_current_accountant)
+    manager = Depends(get_current_manager)
 ):
     """Lấy danh sách cư dân"""
     residents = db.query(Resident).offset(skip).limit(limit).all()
@@ -26,9 +25,9 @@ def get_residents(
 
 @router.post("/add-new-resident", response_model=ResidentBase, status_code=status.HTTP_201_CREATED)
 def create_resident(
-    resident_in: ResidentCreate,
-    db: Session = Depends(get_db),
-    current_accountant = Depends(get_current_accountant)
+    resident_in: ResidentCreate, 
+    db: Session = Depends(get_db),    
+    manager = Depends(get_current_manager)
 ):
     apartment = db.query(Apartment).filter(Apartment.apartmentID == resident_in.apartmentID).first()
     if not apartment:
@@ -36,6 +35,9 @@ def create_resident(
 
     new_resident = Resident(**resident_in.dict())
     db.add(new_resident)
+
+    current_count = apartment.numResident if apartment.numResident else 0
+    apartment.numResident = current_count + 1
 
     try:
         db.commit()
@@ -60,7 +62,7 @@ def get_resident_detail(
     fullname: str,
     apartment_id: str,
     db: Session = Depends(get_db),
-    admin = Depends(get_only_admin)
+    manager = Depends(get_current_manager)
 ):
     resident = db.query(Resident).filter(
         Resident.apartmentID==apartment_id,
@@ -77,7 +79,7 @@ def update_resident(
     id: int,
     resident_in: ResidentUpdate,
     db: Session = Depends(get_db),
-    admin = Depends(get_only_admin)
+    manager = Depends(get_current_manager)
 ):
     resident = db.query(Resident).filter(Resident.residentID == id).first()
     if not resident:
@@ -104,11 +106,16 @@ def update_resident(
 def delete_resident(
     id: int,
     db: Session = Depends(get_db),
-    admin = Depends(get_only_admin)
+    manager = Depends(get_current_manager)
 ):
     resident = db.query(Resident).filter(Resident.residentID == id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
+    
+    apartment = db.query(Apartment).filter(Apartment.apartmentID == resident.apartmentID).first()
+    
+    if apartment and apartment.numResident > 0:
+        apartment.numResident -= 1
 
     db.delete(resident)
     db.commit()
