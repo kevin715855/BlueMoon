@@ -1,6 +1,4 @@
 import { useAuth } from "./hooks/useAuth";
-import { useApartments } from "./hooks/useApartments";
-import { useResidents } from "./hooks/useResidents";
 import { LoginPage } from "./components/LoginPage";
 import { ResidentDashboard } from "./components/resident/ResidentDashboard";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
@@ -38,8 +36,6 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
 
 function App() {
   const { user, loading: authLoading, error: authError, login, logout } = useAuth();
-  const { apartments, loading: apartmentsLoading, error: apartmentsError } = useApartments();
-  const { residents, loading: residentsLoading, error: residentsError } = useResidents();
 
   // Show loading screen while checking authentication
   if (authLoading) {
@@ -58,7 +54,7 @@ function App() {
 
   // User is authenticated - determine which dashboard to show based on role
   const isResident = user.role === "Resident";
-  const isAdmin = user.role === "Accountant" || user.role === "Admin" || user.role === "Manager" || user.role === "BuildingManager";
+  const isAdmin = user.role === "Accountant" || user.role === "Admin" || user.role === "Manager";
 
   if (isResident) {
     // Resident Dashboard
@@ -72,23 +68,11 @@ function App() {
   }
 
   if (isAdmin) {
-    // Admin Dashboard - load apartments and residents
-    const loading = apartmentsLoading || residentsLoading;
-    const error = apartmentsError || residentsError;
-
-    if (error) {
-      return <ErrorScreen message={error} onRetry={() => window.location.reload()} />;
-    }
-
     return (
       <AdminDashboard
         username={user.username}
         role={user.role}
-        apartments={apartments}
-        residents={residents}
         onLogout={logout}
-        apartmentsLoading={apartmentsLoading}
-        residentsLoading={residentsLoading}
       />
     );
   }

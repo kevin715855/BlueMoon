@@ -16,7 +16,7 @@ def get_bills_data(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    resident = db.query(Resident).filter(current_user.username == Resident.username).first()
+    resident = db.query(Resident).filter(current_user.username==Resident.username).first()
     if not resident:
         return []
 

@@ -1,39 +1,33 @@
-import { useState } from 'react';
-import { Sidebar } from '../Sidebar';
-import { DashboardHeader } from '../shared/DashboardHeader';
-import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { DashboardTab } from './DashboardTab';
-import { ResidentsTab } from './ResidentsTab';
-import { ApartmentsTab } from './ApartmentsTab';
-import { PaymentsTab } from './PaymentsTab';
-import { NotificationsTab } from './NotificationsTab';
-import { AdminTab } from './AdminTab';
-import type { Apartment, Resident } from '../../services/api';
+import { useState } from "react";
+import { Sidebar } from "../Sidebar";
+import { DashboardHeader } from "../shared/DashboardHeader";
+import { LoadingSpinner } from "../shared/LoadingSpinner";
+import { DashboardTab } from "./DashboardTab";
+import { ResidentsTab } from "./ResidentsTab";
+import { ApartmentsTab } from "./ApartmentsTab";
+import { PaymentsTab } from "./PaymentsTab";
+import { AdminTab } from "./AdminTab";
+import { useApartments } from "../../hooks/useApartments";
+import { useResidents } from "../../hooks/useResidents";
 
-type TabType = 'dashboard' | 'apartments' | 'residents' | 'payments' | 'notifications' | 'admin';
+type TabType = "dashboard" | "apartments" | "residents" | "payments" | "admin";
 
 interface AdminDashboardProps {
   username: string;
   role: string;
-  apartments: Apartment[];
-  residents: Resident[];
   onLogout: () => void;
-  apartmentsLoading?: boolean;
-  residentsLoading?: boolean;
 }
 
 export function AdminDashboard({
   username,
   role,
-  apartments,
-  residents,
   onLogout,
-  apartmentsLoading = false,
-  residentsLoading = false,
 }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const { apartments, loading: apartmentsLoading, error: apartmentsError } = useApartments();
+  const { residents, loading: residentsLoading, error: residentsError } = useResidents();
 
-  const unreadNotifications = 0; // Will be loaded from backend
+  const [activeTab, setActiveTab] = useState<TabType>("dashboard");
+
   const isLoading = apartmentsLoading || residentsLoading;
 
   return (
@@ -41,7 +35,6 @@ export function AdminDashboard({
       <Sidebar
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as TabType)}
-        notificationCount={unreadNotifications}
       />
 
       <div className="flex-1">
@@ -49,12 +42,11 @@ export function AdminDashboard({
           username={username}
           role={role}
           subtitle="Manage your properties efficiently"
-          notificationCount={unreadNotifications}
           onLogout={onLogout}
         />
 
         <main className="p-8">
-          {activeTab === 'dashboard' && (
+          {activeTab === "dashboard" && (
             <>
               {isLoading ? (
                 <LoadingSpinner message="Loading dashboard data..." />
@@ -64,11 +56,7 @@ export function AdminDashboard({
             </>
           )}
 
-          {activeTab === 'residents' && (
-            <ResidentsTab residents={residents} loading={residentsLoading} />
-          )}
-
-          {activeTab === 'apartments' && (
+          {activeTab === "apartments" && (
             <ApartmentsTab
               apartments={apartments}
               residents={residents}
@@ -76,11 +64,13 @@ export function AdminDashboard({
             />
           )}
 
-          {activeTab === 'payments' && <PaymentsTab />}
+          {activeTab === "residents" && (
+            <ResidentsTab residents={residents} loading={residentsLoading} />
+          )}
 
-          {activeTab === 'notifications' && <NotificationsTab />}
+          {activeTab === "payments" && <PaymentsTab />}
 
-          {activeTab === 'admin' && <AdminTab />}
+          {activeTab === "admin" && <AdminTab />}
         </main>
       </div>
     </div>

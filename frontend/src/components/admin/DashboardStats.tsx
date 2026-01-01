@@ -18,7 +18,7 @@ export function DashboardStats({ apartments, residents }: DashboardStatsProps) {
       <StatCard
         title="Total Apartments"
         value={totalApartments}
-        subtitle={`${occupiedApartments} Occupied, ${vacantApartments} Vacant`}
+        subtitle=""
         icon={Building2}
         iconBgColor="bg-blue-100"
         iconColor="text-blue-600"

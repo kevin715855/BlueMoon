@@ -25,7 +25,7 @@ def create_qr_code(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Không tìm thấy thông tin cư dân"
         )
-    
+
     return PaymentService.create_qr_transaction(
         db=db,
         user_id=getattr(resident, 'residentID'),
@@ -41,7 +41,7 @@ def receive_sepay_webhook(
 
     return PaymentService.process_sepay_webhook(
         db=db,
-        content=data.transaction_content,      # Nội dung CK 
+        content=data.transaction_content,      # Nội dung CK
         amount_in=float(data.amount_in),       # Số tiền nhận được
         gateway_id=str(data.id),               # ID giao dịch phía SePay
         transaction_date=data.transaction_date # Ngày giờ giao dịch
