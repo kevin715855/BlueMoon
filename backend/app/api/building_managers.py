@@ -11,7 +11,7 @@ from backend.app.core.db import get_db
 from backend.app.models.building_manager import BuildingManager
 from backend.app.models.account import Account
 from backend.app.models.building import Building
-from backend.app.schemas.building import (
+from backend.app.schemas.building_manager import (
     BuildingManagerCreate,
     BuildingManagerUpdate,
     BuildingManagerRead
