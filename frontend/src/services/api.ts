@@ -45,9 +45,9 @@ export interface AccountPasswordUpdate {
 // Apartment Types
 export interface Apartment {
   apartmentID: string;
+  numResident?: number;
   status?: string;
   buildingID?: string;
-  numResident?: number;
 }
 
 export interface ApartmentCreate {

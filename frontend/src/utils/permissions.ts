@@ -37,12 +37,14 @@ export const Permissions = {
 
   // Bills - Only Resident and Admin
   canViewMyBills: (role: UserRole): boolean => {
-    return role === "Resident" || role === "Admin";
+    // return role === "Resident" || role === "Admin";
+    return role == "Resident";
   },
 
   // Payments - Only Resident and Admin
   canViewMyPayments: (role: UserRole): boolean => {
-    return role === "Resident" || role === "Admin";
+    // return role === "Resident" || role === "Admin";
+    return role == "Resident";
   },
 
   canCreateQRPayment: (role: UserRole): boolean => {

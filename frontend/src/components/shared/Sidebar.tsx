@@ -34,7 +34,7 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
 
     // Manager/Admin menu items
     if (Permissions.canManageAccounts(userRole)) {
-      items.push({ id: "accounts", label: "Quản lý tài khoản", icon: UserCog });
+      items.push({ id: "accounts", label: "Tài khoản", icon: UserCog });
     }
 
     if (Permissions.canManageResidents(userRole)) {
@@ -46,7 +46,7 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     }
 
     if (Permissions.canManageBuildingManagers(userRole)) {
-      items.push({ id: "building-managers", label: "Quản lý tòa nhà", icon: ClipboardList });
+      items.push({ id: "building-managers", label: "Quản lý", icon: ClipboardList });
     }
 
     if (Permissions.canManageAccountants(userRole)) {

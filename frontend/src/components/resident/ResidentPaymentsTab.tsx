@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { CheckCircle, Clock, XCircle, QrCode, CreditCard } from "lucide-react";
 import { api, type PaymentTransaction, type Bill } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
@@ -198,6 +198,9 @@ export function ResidentPaymentsTab() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-blue-900">Mã QR Thanh Toán</DialogTitle>
+            <DialogDescription className="text-center text-gray-500">
+              Quét mã QR để thanh toán hóa đơn
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center space-y-4 p-6">
             {qrCodeUrl ? (
@@ -209,9 +212,6 @@ export function ResidentPaymentsTab() {
                     className="w-full max-w-sm h-auto"
                   />
                 </div>
-                <p className="text-center text-gray-600 text-sm">
-                  Quét mã QR để thanh toán hóa đơn
-                </p>
                 <Button
                   onClick={() => setShowQrModal(false)}
                   className="w-full bg-blue-600 hover:bg-blue-700"
