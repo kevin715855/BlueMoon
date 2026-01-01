@@ -37,6 +37,9 @@ def create_resident(
     new_resident = Resident(**resident_in.dict())
     db.add(new_resident)
 
+    current_count = apartment.numResident if apartment.numResident else 0
+    apartment.numResident = current_count + 1
+
     try:
         db.commit()
         db.refresh(new_resident)
@@ -109,6 +112,11 @@ def delete_resident(
     resident = db.query(Resident).filter(Resident.residentID == id).first()
     if not resident:
         raise HTTPException(status_code=404, detail="Không tìm thấy cư dân")
+    
+    apartment = db.query(Apartment).filter(Apartment.apartmentID == resident.apartmentID).first()
+    
+    if apartment and apartment.numResident > 0:
+        apartment.numResident -= 1
 
     db.delete(resident)
     db.commit()
