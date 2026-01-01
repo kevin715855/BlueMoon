@@ -108,13 +108,12 @@ class TransactionDetailBase(BaseModel):
     """Base schema cho Transaction Detail"""
     transID: int = Field(..., description="ID giao dịch")
     billID: int = Field(..., description="ID hóa đơn được thanh toán")
-    amount: float | None = Field(
-        default=None, ge=0, description="Số tiền thanh toán cho bill này")
+    amount: float = Field(..., ge=0, description="Số tiền thanh toán cho bill này")
 
 
 class TransactionDetailCreate(TransactionDetailBase):
     """Schema cho tạo Transaction Detail (dùng sp_add_transaction_detail)"""
-    amount: float = Field(..., gt=0, description="Số tiền phải > 0")
+    pass
 
     class Config:
         json_schema_extra = {
@@ -220,3 +219,29 @@ class SePayTransactionData(BaseModel):
 
 class SePayWebhookPayload(BaseModel):
     transaction: SePayTransactionData
+
+# ==================== RECEIPT SCHEMAS ====================
+class ReceiptBillDetail(BaseModel):
+    """Chi tiết hóa đơn trong biên lai"""
+    billID: int
+    billName: str
+    amount: float
+    dueDate: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ReceiptResponse(BaseModel):
+    """Schema cho biên lai thanh toán"""
+    transID: int
+    residentID: int
+    residentName: str
+    apartmentID: str
+    phoneNumber: str | None
+    totalAmount: float
+    paymentMethod: str
+    paymentContent: str | None
+    status: str
+    payDate: str
+    bills: list[ReceiptBillDetail]
+    
+    model_config = ConfigDict(from_attributes=True)

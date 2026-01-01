@@ -14,7 +14,7 @@ from fastapi import FastAPI  # noqa: E402
 # Import 
 from backend.app.models import Base  # noqa: E402
 from backend.app.core.db import get_engine  # noqa: E402
-from backend.app.api import online_payments, auth, residents, apartments, bills, payments, offline_payments  # noqa: E402
+from backend.app.api import account, online_payments, auth, residents, apartments, bills, payments, offline_payments, building_managers, accountants, receipts  # noqa: E402
 
 def _parse_cors_origins(value: str | None) -> list[str]:
     if not value:
@@ -76,34 +76,73 @@ app.include_router(
     tags=["Authentication"]
 )  # Authentication: login, me, logout
 
-# Online Payment Router
+# Account Router
 app.include_router(
-    online_payments.router, 
-    prefix="/api/payments", 
-    tags=["Online Payments"]
+    account.router,
+    prefix="/api/accounts",
+    tags=["Accounts"]
 )
 
-# Residents and Apartments Router
+# Residents Router
 app.include_router(
     residents.router, 
     prefix="/api/residents", 
     tags=["Residents"]
 )
 
+# Building Managers Router
+app.include_router(
+    building_managers.router,
+    prefix="/api/building-managers",
+    tags=["Building Managers"]
+)
+
+# Accountants Router
+app.include_router(
+    accountants.router,
+    prefix="/api/accountants",
+    tags=["Accountants"]
+)
+
+# Apartments Router
 app.include_router(
     apartments.router, 
     prefix="/api/apartments", 
     tags=["Apartments"]
 )
 
+# Bills Router
 app.include_router(
     bills.router,
     prefix="/api/bills",
-    tags=["Resident-Bills"]
+    tags=["Bills"]
+)
+
+# Payment Routes
+app.include_router(
+    online_payments.router, 
+    prefix="/api/online-payments", 
+    tags=["Online Payments"]
+)
+
+app.include_router(
+    offline_payments.router,
+    prefix="/api/offline-payments",
+    tags=["Offline Payments"]
 )
 
 app.include_router(
     payments.router,
     prefix="/api/payments",
-    tags=["Resident-Payments"]
+    tags=["Payment History"]
 )
+
+# Receipts Router
+app.include_router(
+    receipts.router,
+    prefix="/api/receipts",
+    tags=["Receipts"]
+)
+
+
+

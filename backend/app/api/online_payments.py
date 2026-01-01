@@ -8,7 +8,7 @@ from backend.app.services.payment_service import PaymentService
 # Import Auth
 from backend.app.api.auth import get_current_user
 from backend.app.schemas.auth import TokenData
-from backend.app.models.account import Account
+from backend.app.models.resident import Resident
 router = APIRouter()
 
 @router.post("/create-qr", summary="Create QR")
@@ -17,17 +17,18 @@ def create_qr_code(
     db: Session = Depends(get_db),
     token_data: TokenData = Depends(get_current_user)
 ):
-    user = db.query(Account).filter(Account.username == token_data.username).first()
-
-    if not user:
+    
+    resident = db.query(Resident).filter(Resident.username == token_data.username).first()
+    
+    if not resident:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Không tìm thấy thông tin tài khoản"
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Không tìm thấy thông tin cư dân"
         )
 
     return PaymentService.create_qr_transaction(
         db=db,
-        user_id=user.resident[0].residentID,
+        user_id=getattr(resident, 'residentID'),
         bill_ids=payload.bill_ids
     )
 

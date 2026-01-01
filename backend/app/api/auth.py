@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
-from backend.app.core.security import create_access_token, decode_access_token
+from backend.app.core.security import create_access_token, decode_access_token, verify_password
 from backend.app.models.account import Account
 from backend.app.schemas.auth import LoginRequest, LoginResponse, MeResponse, TokenData
 
@@ -17,6 +17,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
     **Errors**:
     -400: Thiếu username hoặc password
     -401: Username hoặc password không đúng
+    -403: Tài khoản bị vô hiệu hóa
     """
 
     # Validate input
@@ -26,18 +27,24 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
             detail="Username và password là bắt buộc"
         )
 
-    # Query user từ db để kiểm tra
+    # Query user từ db theo username
     user = db.query(Account).filter(
-        Account.username == payload.username,
-        Account.password == payload.password
+        Account.username == payload.username
     ).first()
 
-    # Không có user
-    if not user:
+    # Không tìm thấy user hoặc password sai
+    if not user or not verify_password(payload.password, str(user.password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Username hoặc mật khẩu không đúng",
             headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    # Kiểm tra tài khoản có đang active không
+    if getattr(user, 'isActive', True) == False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."
         )
 
     # Tạo JWT token
