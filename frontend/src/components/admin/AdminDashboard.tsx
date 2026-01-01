@@ -1,16 +1,12 @@
 import { useState } from "react";
-import { Sidebar } from "../Sidebar";
-import { DashboardHeader } from "../shared/DashboardHeader";
-import { LoadingSpinner } from "../shared/LoadingSpinner";
-import { DashboardTab } from "./DashboardTab";
-import { ResidentsTab } from "./ResidentsTab";
-import { ApartmentsTab } from "./ApartmentsTab";
-import { PaymentsTab } from "./PaymentsTab";
-import { AdminTab } from "./AdminTab";
-import { useApartments } from "../../hooks/useApartments";
-import { useResidents } from "../../hooks/useResidents";
-
-type TabType = "dashboard" | "apartments" | "residents" | "payments" | "admin";
+import { Sidebar } from "../shared/Sidebar";
+import { AdminOverviewTab } from "./AdminOverviewTab";
+import { AccountManagementTab } from "./AccountManagementTab";
+import { ResidentManagementTab } from "./ResidentManagementTab";
+import { ApartmentManagementTab } from "./ApartmentManagementTab";
+import { BuildingManagersTab } from "./BuildingManagersTab";
+import { AccountantsTab } from "./AccountantsTab";
+import { OfflinePaymentsTab } from "./OfflinePaymentsTab";
 
 interface AdminDashboardProps {
   username: string;
@@ -18,60 +14,35 @@ interface AdminDashboardProps {
   onLogout: () => void;
 }
 
-export function AdminDashboard({
-  username,
-  role,
-  onLogout,
-}: AdminDashboardProps) {
-  const { apartments, loading: apartmentsLoading, error: apartmentsError } = useApartments();
-  const { residents, loading: residentsLoading, error: residentsError } = useResidents();
-
-  const [activeTab, setActiveTab] = useState<TabType>("dashboard");
-
-  const isLoading = apartmentsLoading || residentsLoading;
+export function AdminDashboard({ username, role, onLogout }: AdminDashboardProps) {
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Sidebar
+        role={role}
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as TabType)}
+        onTabChange={setActiveTab}
+        onLogout={onLogout}
       />
 
-      <div className="flex-1">
-        <DashboardHeader
-          username={username}
-          role={role}
-          subtitle="Manage your properties efficiently"
-          onLogout={onLogout}
-        />
+      <div className="flex-1 overflow-auto">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
+          <h2 className="text-white">
+            Xin chào, {username}
+          </h2>
+          <p className="text-blue-100">Bảng điều khiển {role}</p>
+        </div>
 
-        <main className="p-8">
-          {activeTab === "dashboard" && (
-            <>
-              {isLoading ? (
-                <LoadingSpinner message="Loading dashboard data..." />
-              ) : (
-                <DashboardTab apartments={apartments} residents={residents} />
-              )}
-            </>
-          )}
-
-          {activeTab === "apartments" && (
-            <ApartmentsTab
-              apartments={apartments}
-              residents={residents}
-              loading={apartmentsLoading}
-            />
-          )}
-
-          {activeTab === "residents" && (
-            <ResidentsTab residents={residents} loading={residentsLoading} />
-          )}
-
-          {activeTab === "payments" && <PaymentsTab />}
-
-          {activeTab === "admin" && <AdminTab />}
-        </main>
+        <div className="p-8">
+          {activeTab === "dashboard" && <AdminOverviewTab />}
+          {activeTab === "accounts" && <AccountManagementTab role={role} />}
+          {activeTab === "residents" && <ResidentManagementTab role={role} />}
+          {activeTab === "apartments" && <ApartmentManagementTab role={role} />}
+          {activeTab === "building-managers" && <BuildingManagersTab role={role} />}
+          {activeTab === "accountants" && <AccountantsTab role={role} />}
+          {activeTab === "offline-payments" && <OfflinePaymentsTab role={role} />}
+        </div>
       </div>
     </div>
   );

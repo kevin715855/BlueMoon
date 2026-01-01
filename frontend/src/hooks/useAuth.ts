@@ -1,78 +1,73 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { api, type LoginResponse, type MeResponse } from "../services/api";
 
-import { api, ApiError } from "../services/api";
-
-export interface User {
+interface AuthUser {
   username: string;
   role: string;
 }
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+interface UseAuthReturn {
+  user: AuthUser | null;
+  loading: boolean;
+  error: string | null;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+export function useAuth(): UseAuthReturn {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if user is already logged in on mount
   useEffect(() => {
-    loadUser();
+    const checkAuth = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const userData: MeResponse = await api.auth.me();
+        setUser({
+          username: userData.username,
+          role: userData.role,
+        });
+      } catch (err) {
+        // Token invalid or expired
+        api.auth.logout();
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  const loadUser = async () => {
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  const login = useCallback(async (username: string, password: string) => {
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await api.auth.me();
+      const response: LoginResponse = await api.auth.login(username, password);
       setUser({
         username: response.username,
         role: response.role,
       });
-      setError(null);
-    } catch (err) {
-      console.error("Failed to load user:", err);
-      setError("Failed to load user data");
-      api.auth.logout();
-      setUser(null);
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+      throw err;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const login = async (
-    username: string,
-    password: string,
-  ): Promise<boolean> => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      let hashedPassword = password;
-
-      const response = await api.auth.login(username, hashedPassword);
-      setUser({
-        username: response.username,
-        role: response.role,
-      });
-      return true;
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("Login failed");
-      }
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
     api.auth.logout();
     setUser(null);
-  };
+  }, []);
 
   return {
     user,
@@ -80,6 +75,5 @@ export function useAuth() {
     error,
     login,
     logout,
-    isAuthenticated: !!user,
   };
 }
