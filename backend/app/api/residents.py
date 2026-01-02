@@ -8,7 +8,7 @@ from backend.app.schemas.resident import ResidentBase, ResidentCreate, ResidentR
 from backend.app.models.apartment import Apartment
 
 from backend.app.core.db import get_db
-from backend.app.api.auth import get_current_accountant, get_only_admin, get_current_manager
+from backend.app.api.auth import get_current_manager
 
 router = APIRouter()
 
