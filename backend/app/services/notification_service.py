@@ -13,7 +13,6 @@ class NotificationService:
         bill = db.query(Bill).filter(Bill.billID == bill_id).first()
         if not bill: return
 
-        # Tìm cư dân (chủ hộ) của căn hộ này
         resident = db.query(Resident).filter(Resident.apartmentID == bill.apartmentID).first()
         if not resident: return
 
@@ -23,7 +22,7 @@ class NotificationService:
         water_val = None
 
         if bill.typeOfBill == "ELECTRICITY":
-            title = f"⚡ Tiền Điện Tháng {month}/{year}"
+            title = f"Tiền Điện Tháng {month}/{year}"
             cons = reading.newElectricity - reading.oldElectricity
             content = (
                 f"Thông báo tiền điện căn hộ {bill.apartmentID}:\n"
@@ -35,7 +34,7 @@ class NotificationService:
             elec_val = reading.newElectricity
 
         elif bill.typeOfBill == "WATER":
-            title = f"💧 Tiền Nước Tháng {month}/{year}"
+            title = f"Tiền Nước Tháng {month}/{year}"
             cons = reading.newWater - reading.oldWater
             content = (
                 f"Thông báo tiền nước căn hộ {bill.apartmentID}:\n"
@@ -47,15 +46,14 @@ class NotificationService:
             water_val = reading.newWater
 
         elif bill.typeOfBill == "SERVICE":
-            title = f"🏢 Phí Dịch Vụ Tháng {month}/{year}"
+            title = f"Phí Dịch Vụ Tháng {month}/{year}"
             content = (
                 f"Thông báo các phí dịch vụ căn hộ {bill.apartmentID} (Quản lý, Gửi xe, Rác...):\n"
-                f"- Tổng cộng: {bill.total:,.0f} VNĐ\n"
+                f"- Tổng cộng: {bill.total:,.0f} VNĐ"
                 f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}\n"
-                f"Vui lòng thanh toán đúng hạn để tránh phát sinh phí chậm nộp."
+                f"Vui lòng thanh toán đúng hạn để tránh phát sinh phí."
             )
 
-        # Lưu thông báo vào bảng NOTIFICATION
         noti = Notification(
             residentID=resident.residentID,
             title=title,
@@ -68,23 +66,27 @@ class NotificationService:
             water=water_val
         )
         db.add(noti)
-        # Không gọi db.commit() ở đây để AccountingService commit một thể theo transaction
 
     @staticmethod
-    def notify_payment_result(db: Session, content_str: str, resident_id: int, status: str, amount: float, trans_id: int):
-        """Thông báo khi thanh toán Online thành công/thất bại"""
+    def notify_payment_result(db: Session, content: str, resident_id: int, status: str, amount: float, trans_id: int):
+        """
+        Tạo thông báo kết quả giao dịch (Thành công / Thất bại).
+        """
         if status == "Success":
-            title = "✅ Thanh toán thành công"
-            msg = f"Giao dịch {content_str} số tiền {amount:,.0f} VNĐ đã được ghi nhận thành công. Cảm ơn quý cư dân!"
+            title = "Thanh toán thành công"
+            content = f"Giao dịch {content} của bạn thanh toán thành công."
+        elif status == "Failed":
+            title = "Thanh toán thất bại"
+            content = f"Giao dịch {content} thanh toán không thành công. Vui lòng kiểm tra lại số dư hoặc thử lại."
         else:
-            title = "❌ Thanh toán thất bại"
-            msg = f"Giao dịch {content_str} không thành công. Vui lòng kiểm tra lại số dư hoặc liên hệ ban quản lý."
+            title = "Lỗi giao dịch"
+            content = f"Có lỗi xảy ra trong quá trình xử lý giao dịch {content}."
 
         noti = Notification(
             residentID=resident_id,
             type="PAYMENT_RESULT",
             title=title,
-            content=msg,
+            content=content,
             relatedID=trans_id,
             isRead=False,
             createdDate=datetime.now()

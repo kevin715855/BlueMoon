@@ -6,6 +6,8 @@ from backend.app.models.service_fee import ServiceFee
 from backend.app.models.apartment import Apartment
 from backend.app.models.bill import Bill
 from backend.app.models.meter_reading import MeterReading
+
+from backend.app.models.transaction_detail import TransactionDetail
 from backend.app.services.notification_service import NotificationService
 
 class AccountingService:
@@ -49,67 +51,95 @@ class AccountingService:
         """Tính toán và tạo hóa đơn cho 3 luồng: Điện, Nước, Phí dịch vụ"""
         deadline_date = dt.date(year, month, deadline_day)
 
-        # 1. Xử lý ghi đè: Xóa các hóa đơn định kỳ cũ của tháng này nếu chọn overwrite
-        if overwrite:
-            db.query(Bill).filter(
-                Bill.deadline == deadline_date,
-                Bill.typeOfBill.in_(["ELECTRICITY", "WATER", "SERVICE"])
-            ).delete(synchronize_session=False)
-            db.flush()
+        existing_bills = db.query(Bill).filter(
+            Bill.deadline == deadline_date,
+            Bill.typeOfBill.in_(["ELECTRICITY", "WATER", "SERVICE"])
+        )
+
+        if existing_bills.count() > 0:
+            if not overwrite:
+                raise Exception(f"Đã có hóa đơn tháng {month}/{year}. Chọn 'Ghi đè' để tính lại.")
+            
+            bills_to_delete = existing_bills.all()
+            bill_ids = [b.billID for b in bills_to_delete]
+            
+            if bill_ids:
+                db.query(TransactionDetail).filter(
+                    TransactionDetail.billID.in_(bill_ids)
+                ).delete(synchronize_session=False)
+
+            existing_bills.delete(synchronize_session=False)
+            db.commit()
 
         apartments = db.query(Apartment).all()
         all_fees = db.query(ServiceFee).all()
         bills_created = 0
 
-        for apt in apartments:
-            # Lấy chỉ số từ bảng METER_READING
-            reading = db.query(MeterReading).filter(
-                MeterReading.apartmentID == apt.apartmentID,
-                MeterReading.month == month,
-                MeterReading.year == year
-            ).first()
+        readings = db.query(MeterReading).filter(
+            MeterReading.month == month,
+            MeterReading.year == year
+        ).all()
 
-            # --- LUỒNG 1: TIỀN ĐIỆN ---
+        reading_map = {r.apartmentID: r for r in readings}
+
+        for apt in apartments:
+            reading = reading_map.get(apt.apartmentID)
+
             if reading and reading.newElectricity > reading.oldElectricity:
                 elec_cons = reading.newElectricity - reading.oldElectricity
-                elec_total = AccountingService.calculate_electricity_cost(float(elec_cons))
-                
-                bill_elec = Bill(
-                    apartmentID=apt.apartmentID, accountantID=accountant_id,
-                    createDate=dt.datetime.now(), deadline=deadline_date,
-                    typeOfBill="ELECTRICITY", amount=elec_total, total=elec_total, status='Unpaid'
-                )
-                db.add(bill_elec)
-                db.flush() # Để lấy billID cho Notification
-                NotificationService.notify_new_bill(db, bill_elec.billID, month, year, reading)
-                bills_created += 1
 
-            # --- LUỒNG 2: TIỀN NƯỚC ---
+                if elec_cons > 0:
+                    elec_total = AccountingService.calculate_electricity_cost(float(elec_cons))
+                    
+                    bill_elec = Bill(
+                        apartmentID=apt.apartmentID, 
+                        accountantID=accountant_id,
+                        createDate=dt.datetime.now(),
+                        deadline=deadline_date,
+                        typeOfBill="ELECTRICITY",
+                        amount=elec_total,
+                        total=elec_total,
+                        status='Unpaid'
+                    )
+                    db.add(bill_elec)
+                    db.flush() 
+                    NotificationService.notify_new_bill(db, bill_elec.billID, month, year, reading)
+                    bills_created += 1
+
             if reading and reading.newWater > reading.oldWater:
                 water_cons = reading.newWater - reading.oldWater
-                water_total = AccountingService.calculate_water_cost(float(water_cons))
-                
-                bill_water = Bill(
-                    apartmentID=apt.apartmentID, accountantID=accountant_id,
-                    createDate=dt.datetime.now(), deadline=deadline_date,
-                    typeOfBill="WATER", amount=water_total, total=water_total, status='Unpaid'
-                )
-                db.add(bill_water)
-                db.flush()
-                NotificationService.notify_new_bill(db, bill_water.billID, month, year, reading)
-                bills_created += 1
+                if water_cons > 0:
+                    water_total = AccountingService.calculate_water_cost(float(water_cons))
+                    
+                    bill_water = Bill(
+                        apartmentID=apt.apartmentID,
+                        accountantID=accountant_id,
+                        createDate=dt.datetime.now(),
+                        deadline=deadline_date,
+                        typeOfBill="WATER",
+                        amount=water_total,
+                        total=water_total,
+                        status='Unpaid'
+                    )
+                    db.add(bill_water)
+                    db.flush()
+                    NotificationService.notify_new_bill(db, bill_water.billID, month, year, reading)
+                    bills_created += 1
 
-            # --- LUỒNG 3: PHÍ DỊCH VỤ CHUNG ---
-            # Lấy các phí cố định của tòa nhà (không phải điện, nước)
             apt_fees = [f for f in all_fees if f.buildingID == apt.buildingID]
             service_sum = sum(Decimal(str(f.unitPrice)) for f in apt_fees 
                              if "điện" not in f.serviceName.lower() and "nước" not in f.serviceName.lower())
             
             if service_sum > 0:
                 bill_service = Bill(
-                    apartmentID=apt.apartmentID, accountantID=accountant_id,
-                    createDate=dt.datetime.now(), deadline=deadline_date,
-                    typeOfBill="SERVICE", amount=service_sum, total=service_sum, status='Unpaid'
+                    apartmentID=apt.apartmentID,
+                    accountantID=accountant_id,
+                    createDate=dt.datetime.now(),
+                    deadline=deadline_date,
+                    typeOfBill="SERVICE",
+                    amount=service_sum,
+                    total=service_sum,
+                    status='Unpaid'
                 )
                 db.add(bill_service)
                 db.flush()
@@ -117,6 +147,7 @@ class AccountingService:
                 bills_created += 1
 
         db.commit()
+
         return bills_created
 
     @staticmethod
