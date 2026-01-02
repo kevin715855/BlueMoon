@@ -2,63 +2,70 @@ from sqlalchemy.orm import Session
 from backend.app.models.notification import Notification
 from backend.app.models.resident import Resident
 from backend.app.models.bill import Bill
+from backend.app.models.meter_reading import MeterReading
 from datetime import datetime
 
 class NotificationService:
 
     @staticmethod
-    def notify_new_bill(db: Session, bill_id: int):
-        """
-        Tạo thông báo hóa đơn.
-        - Định kỳ
-        - Hóa đơn lẻ
-        """
+    def notify_new_bill(db: Session, bill_id: int, month: int, year: int, reading: MeterReading = None):
+        """Soạn nội dung thông báo dựa trên loại hóa đơn"""
         bill = db.query(Bill).filter(Bill.billID == bill_id).first()
-        if not bill:
-            return
+        if not bill: return
 
         resident = db.query(Resident).filter(Resident.apartmentID == bill.apartmentID).first()
-        if not resident:
-            return
+        if not resident: return
 
-        monthly_types = ["ELECTRICITY", "WATER", "SERVICE"]
+        title = ""
+        content = ""
+        elec_val = None
+        water_val = None
 
-        if bill.typeOfBill in monthly_types:
-            bill_type_map = {
-                "ELECTRICITY": "Tiền Điện",
-                "WATER": "Tiền Nước",
-                "SERVICE": "Phí Dịch Vụ",
-            }
-            type_vn = bill_type_map.get(bill.typeOfBill, bill.typeOfBill)
-            
-            month_str = str(bill.createDate.month) if bill.createDate else str(datetime.now().month)
-            year_str = str(bill.createDate.year) if bill.createDate else str(datetime.now().year)
-
-            title = f"Thông báo đóng {type_vn}"
+        if bill.typeOfBill == "ELECTRICITY":
+            title = f"Tiền Điện Tháng {month}/{year}"
+            cons = reading.newElectricity - reading.oldElectricity
             content = (
-                f"Hóa đơn {type_vn} tháng {month_str}/{year_str}.\n"
-                f"Tổng tiền: {bill.total:,.0f}đ.\n"
-                f"Hạn thanh toán: {bill.deadline}."
+                f"Thông báo tiền điện căn hộ {bill.apartmentID}:\n"
+                f"- Chỉ số: {reading.oldElectricity:g} -> {reading.newElectricity:g}\n"
+                f"- Tiêu thụ: {cons:g} kWh\n"
+                f"- Tổng tiền: {bill.total:,.0f} VNĐ\n"
+                f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}"
             )
-        else:
+            elec_val = reading.newElectricity
 
-            title = f"Thông báo {bill.typeOfBill}"
-
+        elif bill.typeOfBill == "WATER":
+            title = f"Tiền Nước Tháng {month}/{year}"
+            cons = reading.newWater - reading.oldWater
             content = (
-                f"{bill.typeOfBill}. Tổng tiền: {bill.total:,.0f}đ. Hạn thanh toán: {bill.deadline}."
+                f"Thông báo tiền nước căn hộ {bill.apartmentID}:\n"
+                f"- Chỉ số: {reading.oldWater:g} -> {reading.newWater:g}\n"
+                f"- Tiêu thụ: {cons:g} m3\n"
+                f"- Tổng tiền: {bill.total:,.0f} VNĐ\n"
+                f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}"
+            )
+            water_val = reading.newWater
+
+        elif bill.typeOfBill == "SERVICE":
+            title = f"Phí Dịch Vụ Tháng {month}/{year}"
+            content = (
+                f"Thông báo các phí dịch vụ căn hộ {bill.apartmentID} (Quản lý, Gửi xe, Rác...):\n"
+                f"- Tổng cộng: {bill.total:,.0f} VNĐ"
+                f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}\n"
+                f"Vui lòng thanh toán đúng hạn để tránh phát sinh phí."
             )
 
         noti = Notification(
             residentID=resident.residentID,
-            type="NEW_BILL",
             title=title,
             content=content,
+            type="NEW_BILL",
             relatedID=bill.billID,
             isRead=False,
-            createdDate=datetime.now()
+            createdDate=datetime.now(),
+            electricity=elec_val,
+            water=water_val
         )
         db.add(noti)
-        db.commit()
 
     @staticmethod
     def notify_payment_result(db: Session, content: str, resident_id: int, status: str, amount: float, trans_id: int):
@@ -81,28 +88,20 @@ class NotificationService:
             title=title,
             content=content,
             relatedID=trans_id,
-            isRead=False
+            isRead=False,
+            createdDate=datetime.now()
         )
         db.add(noti)
         db.commit()
 
     @staticmethod
     def create_broadcast(db: Session, title: str, content: str):
+        """Gửi thông báo chung cho tất cả cư dân"""
         residents = db.query(Resident).all()
-        noti_list = []
-        
         for r in residents:
-            noti_list.append(Notification(
-                residentID=r.residentID,
-                type="GENERAL", 
-                title=title,
-                content=content,
-                isRead=False,
-                createdDate=datetime.now()
+            db.add(Notification(
+                residentID=r.residentID, title=title, content=content,
+                type="GENERAL", isRead=False, createdDate=datetime.now()
             ))
-            
-        if noti_list:
-            db.add_all(noti_list)
-            db.commit()
-            
+        db.commit()
         return len(residents)
