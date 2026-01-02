@@ -24,7 +24,7 @@ class NotificationService:
 
         if bill.typeOfBill == "ELECTRICITY":
             title = f"⚡ Tiền Điện Tháng {month}/{year}"
-            cons = reading.newElectricity - reading.oldElectricity
+            cons = reading.electricity_consumption 
             content = (
                 f"Thông báo tiền điện căn hộ {bill.apartmentID}:\n"
                 f"- Chỉ số: {reading.oldElectricity:g} -> {reading.newElectricity:g}\n"
@@ -36,7 +36,7 @@ class NotificationService:
 
         elif bill.typeOfBill == "WATER":
             title = f"💧 Tiền Nước Tháng {month}/{year}"
-            cons = reading.newWater - reading.oldWater
+            cons = reading.water_consumption 
             content = (
                 f"Thông báo tiền nước căn hộ {bill.apartmentID}:\n"
                 f"- Chỉ số: {reading.oldWater:g} -> {reading.newWater:g}\n"

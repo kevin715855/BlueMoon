@@ -70,8 +70,8 @@ class AccountingService:
             ).first()
 
             # --- LUỒNG 1: TIỀN ĐIỆN ---
-            if reading and reading.newElectricity > reading.oldElectricity:
-                elec_cons = reading.newElectricity - reading.oldElectricity
+            if reading and reading.electricity_consumption > 0:
+                elec_cons = reading.electricity_consumption 
                 elec_total = AccountingService.calculate_electricity_cost(float(elec_cons))
                 
                 bill_elec = Bill(
@@ -80,13 +80,14 @@ class AccountingService:
                     typeOfBill="ELECTRICITY", amount=elec_total, total=elec_total, status='Unpaid'
                 )
                 db.add(bill_elec)
-                db.flush() # Để lấy billID cho Notification
+                db.flush() 
                 NotificationService.notify_new_bill(db, bill_elec.billID, month, year, reading)
                 bills_created += 1
 
             # --- LUỒNG 2: TIỀN NƯỚC ---
-            if reading and reading.newWater > reading.oldWater:
-                water_cons = reading.newWater - reading.oldWater
+            # Sử dụng property water_consumption
+            if reading and reading.water_consumption > 0:
+                water_cons = reading.water_consumption 
                 water_total = AccountingService.calculate_water_cost(float(water_cons))
                 
                 bill_water = Bill(
