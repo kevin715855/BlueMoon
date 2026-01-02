@@ -7,6 +7,7 @@ from backend.app.models.apartment import Apartment
 from backend.app.models.bill import Bill
 from backend.app.models.transaction_detail import TransactionDetail
 from backend.app.schemas.bill import BillCreate
+from backend.app.services.notification_service import NotificationService
 from calendar import monthrange
 
 class AccountingService:
@@ -42,84 +43,139 @@ class AccountingService:
 
     @staticmethod
     def calculate_monthly_bills(db: Session, month: int, year: int, accountant_id: int, deadline_day: int, readings: dict = None, overwrite: bool = False):
-        """Logic tính phí TỔNG HỢP hàng tháng cho mỗi căn hộ"""
-        last_day_of_month = monthrange(year, month)[1]
-        actual_deadline_day = min(deadline_day, last_day_of_month)
-        deadline_date = dt.date(year, month, actual_deadline_day)
-
-        type_prefix = f"Phí tổng hợp {month}/{year}"
-
-        existing_bills_query = db.query(Bill).filter(
+        """
+        1. Hóa đơn Điện
+        2. Hóa đơn Nước
+        3. Hóa đơn Dịch vụ chung
+        """
+        deadline_date = dt.date(year, month, deadline_day)
+        
+        existing_bills = db.query(Bill).filter(
             Bill.deadline == deadline_date,
-            Bill.typeOfBill.like(f"{type_prefix}%") # Chỉ lọc hóa đơn tự động
-        )
+            (
+                Bill.typeOfBill.like(f"Tiền Điện T{month}%") | 
+                Bill.typeOfBill.like(f"Tiền Nước T{month}%") |
+                Bill.typeOfBill.like(f"Phí Dịch vụ T{month}%")
+            )
+        ).all()
         
-        
-        if existing_bills_query.count() > 0:
+        if existing_bills:
             if not overwrite:
-                raise Exception(f"Đã tồn tại hóa đơn cho kỳ {month}/{year}. Hãy chọn 'Ghi đè' để tính lại.")
-            
-            # Nếu cho phép ghi đè: Xóa chi tiết giao dịch trước, sau đó xóa Bill
-            old_bill_ids = [b.billID for b in existing_bills_query.all()]
-            db.query(TransactionDetail).filter(TransactionDetail.billID.in_(old_bill_ids)).delete(synchronize_session=False)
-            existing_bills_query.delete(synchronize_session=False)
+                raise Exception(f"Đã có hóa đơn tháng {month}/{year}. Chọn 'Ghi đè' để tính lại.")
+            for b in existing_bills: db.delete(b)
+            db.commit()
 
-        # 3. Tính toán (Giữ nguyên logic tính của bạn nhưng tối ưu query)
         apartments = db.query(Apartment).all()
         fees = db.query(ServiceFee).all()
-        new_bills = []
+        new_bills_to_add = []
+        notification_queue = [] 
 
         for apt in apartments:
-            apartment_total = Decimal('0')
-            description_parts = [] 
+            elec_total = Decimal('0')
+            water_total = Decimal('0')
+            service_total = Decimal('0')
+            
+            elec_details = {"electricity_usage": 0, "electricity_cost": 0}
+            water_details = {"water_usage": 0, "water_cost": 0}
 
             for fee in fees:
-                # Chỉ tính phí của tòa nhà tương ứng
-                if fee.buildingID != apt.buildingID:
-                    continue
-
+                if fee.buildingID != apt.buildingID: continue
+                
                 unit_price = Decimal(str(fee.unitPrice))
                 fee_name_lower = fee.serviceName.lower()
-                fee_amount = Decimal('0')
-
-                # A. Tính phí Điện/Nước dựa trên chỉ số
-                if any(x in fee_name_lower for x in ["điện", "nước"]):
-                    apt_reading = (readings or {}).get(apt.apartmentID, {})
-                    prefix = "dien" if "điện" in fee_name_lower else "nuoc"
-                    consumption = max(0, apt_reading.get(f"{prefix}_moi", 0) - apt_reading.get(f"{prefix}_cu", 0))
-                    fee_amount = unit_price * Decimal(str(consumption))
                 
-                # C. Phí cố định khác
+                if "điện" in fee_name_lower:
+                    apt_reading = (readings or {}).get(apt.apartmentID, {})
+                    consumption = max(0, apt_reading.get("dien_moi", 0) - apt_reading.get("dien_cu", 0))
+                    amount = unit_price * Decimal(str(consumption))
+                    
+                    if amount > 0:
+                        elec_total += amount
+                        elec_details["electricity_usage"] = consumption
+                        elec_details["electricity_cost"] = amount
+
+                elif "nước" in fee_name_lower:
+                    apt_reading = (readings or {}).get(apt.apartmentID, {})
+                    consumption = max(0, apt_reading.get("nuoc_moi", 0) - apt_reading.get("nuoc_cu", 0))
+                    amount = unit_price * Decimal(str(consumption))
+                    
+                    if amount > 0:
+                        water_total += amount
+                        water_details["water_usage"] = consumption
+                        water_details["water_cost"] = amount
+
                 else:
-                    fee_amount = unit_price
+                    service_total += unit_price
 
-                if fee_amount > 0:
-                    apartment_total += fee_amount
-                    description_parts.append(f"{fee.serviceName}")
-
-            # 3. Tạo MỘT hóa đơn duy nhất cho toàn bộ chi phí của căn hộ
-            if apartment_total > 0:
-                new_bills.append(Bill(
+            if elec_total > 0:
+                bill_elec = Bill(
                     apartmentID=apt.apartmentID,
                     accountantID=accountant_id,
                     createDate=dt.datetime.now(),
                     deadline=deadline_date,
-                    typeOfBill=f"Phí tổng hợp {month}/{year} ",
-                    amount=apartment_total,
-                    total=apartment_total, 
+                    typeOfBill=f"Tiền Điện T{month}/{year}",
+                    amount=elec_total,
+                    total=elec_total,
                     status='Unpaid'
-                ))
-        
-        if new_bills:
-            db.add_all(new_bills)
-            db.commit()     
+                )
+                new_bills_to_add.append(bill_elec)
+                notification_queue.append({
+                    "bill": bill_elec, 
+                    "details": elec_details
+                })
 
-        return len(new_bills)
+            if water_total > 0:
+                bill_water = Bill(
+                    apartmentID=apt.apartmentID,
+                    accountantID=accountant_id,
+                    createDate=dt.datetime.now(),
+                    deadline=deadline_date,
+                    typeOfBill=f"Tiền Nước T{month}/{year}",
+                    amount=water_total,
+                    total=water_total,
+                    status='Unpaid'
+                )
+                new_bills_to_add.append(bill_water)
+                notification_queue.append({
+                    "bill": bill_water, 
+                    "details": water_details
+                })
+
+            if service_total > 0:
+                bill_service = Bill(
+                    apartmentID=apt.apartmentID,
+                    accountantID=accountant_id,
+                    createDate=dt.datetime.now(),
+                    deadline=deadline_date,
+                    typeOfBill=f"Phí Dịch vụ T{month}/{year}",
+                    amount=service_total,
+                    total=service_total,
+                    status='Unpaid'
+                )
+                new_bills_to_add.append(bill_service)
+                notification_queue.append({
+                    "bill": bill_service, 
+                    "details": {} 
+                })
+
+        if new_bills_to_add:
+            db.add_all(new_bills_to_add)
+            db.commit() 
+            
+            for item in notification_queue:
+                NotificationService.notify_new_bill(
+                    db, 
+                    item["bill"].billID, 
+                )
+
+        return len(new_bills_to_add)
 
     @staticmethod
     def create_manual_bill(db: Session, data: BillCreate, accountant_id: int):
-        """Lưu hóa đơn nhập tay, tự động xử lý total"""
-        
+        """
+        Dùng cho: Sửa chữa, Phạt, Dịch vụ riêng lẻ...
+        Logic: Tạo bill -> Lưu DB -> Thông báo riêng cho căn hộ đó.
+        """
         new_bill = Bill(
             apartmentID=data.apartmentID,
             accountantID=accountant_id,
@@ -133,6 +189,12 @@ class AccountingService:
         db.add(new_bill)
         db.commit()
         db.refresh(new_bill)
+
+        NotificationService.notify_new_bill(
+            db=db, 
+            bill_id=new_bill.billID, 
+        )
+        
         return new_bill
 
     @staticmethod
