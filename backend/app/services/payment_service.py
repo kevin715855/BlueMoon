@@ -117,21 +117,27 @@ class PaymentService:
             return {"success": True, "message": "Giao dịch này đã được thực hiện"}
 
         # 4. Kiểm tra số tiền
+        details = db.query(TransactionDetail).filter(TransactionDetail.transID == transaction.transID).all()
+        for detail in details:
+            bill = db.query(Bill).filter(Bill.billID == detail.billID).first()
+
         if float(amount_in) < float(transaction.amount):
             NotificationService.notify_payment_result(
                  db=db,
+                 content=bill.typeOfBill,
                  resident_id=transaction.residentID,
                  status="Failed",
                  amount=float(amount_in),
                  trans_id=transaction.transID
             )
+
+            transaction.status = "Failed"
+            db.commit()
             
             return {
                  "success": False, 
                  "message": f"Thanh toán không đủ. Cần: {transaction.amount}, Nhận: {amount_in}"
             }
-        
-            
 
         try:
             # 5. Update Bill (Update DB)
@@ -153,6 +159,7 @@ class PaymentService:
 
             NotificationService.notify_payment_result(
                 db=db,
+                content=bill.typeOfBill,
                 resident_id=transaction.residentID,
                 status="Success",
                 amount=float(amount_in),
@@ -176,7 +183,7 @@ class PaymentService:
 
         count = 0
         for transaction in expired_transactions:
-            transaction.status = "Failed"
+            transaction.status = "Expired"
             count += 1
         
         db.commit()
