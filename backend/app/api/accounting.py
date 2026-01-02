@@ -24,7 +24,7 @@ def set_service_fee(data: ServiceFeeCreate, db: Session = Depends(get_db)):
     msg = AccountingService.create_or_update_fee(db, data, data.buildingID)
     return {"message": msg}
 
-@router.post("/bills/calculate", summary="2. Tính phí tự động (Cộng dồn)")
+@router.post("/bills/calculate", summary="2. Tính phí")
 def calculate_bills(
     payload: CalculateRequest,
     db: Session = Depends(get_db),
@@ -45,7 +45,7 @@ def calculate_bills(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/bills/manual", summary="3. Tạo hóa đơn lẻ (Hệ thống tự tính Total)")
+@router.post("/bills/manual", summary="3. Tạo hóa đơn lẻ")
 def create_manual_bill(
     data: BillCreate, 
     db: Session = Depends(get_db),
