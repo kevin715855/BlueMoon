@@ -4,7 +4,28 @@ import { Users, Building, FileText, UserCog } from "lucide-react";
 import { api } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 
-export function AdminOverviewTab() {
+function InfoTab() {
+  return (
+    <Card className="shadow-lg border-blue-200">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <CardTitle className="py-2 text-white">Chào mừng đến với hệ thống BlueMoon</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600">
+          Sử dụng menu bên trái để quản lý các chức năng của hệ thống.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface AdminOverviewTabProps {
+  role: string;
+}
+
+export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
+  if (role == "Accountant") return <InfoTab />;
+
   const [stats, setStats] = useState({
     totalResidents: 0,
     totalApartments: 0,
@@ -49,7 +70,7 @@ export function AdminOverviewTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {role != "Accountant" && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2 bg-blue-50">
             <CardTitle className="text-sm text-blue-900">Tổng cư dân</CardTitle>
@@ -93,18 +114,9 @@ export function AdminOverviewTab() {
             <p className="text-xs text-gray-500 mt-1">Quản lý & Kế toán</p>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
-      <Card className="shadow-lg border-blue-200">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-          <CardTitle className="text-white">Chào mừng đến với hệ thống BlueMoon</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">
-            Sử dụng menu bên trái để quản lý các chức năng của hệ thống.
-          </p>
-        </CardContent>
-      </Card>
+      <InfoTab />
     </div>
   );
 }

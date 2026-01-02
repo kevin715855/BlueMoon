@@ -142,10 +142,10 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
     <div className="space-y-4">
       <Card className="shadow-lg border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Danh sách quản lý tòa nhà</CardTitle>
+          <CardTitle className="py-4 text-white">Danh sách quản lý tòa nhà</CardTitle>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-white text-blue-600 hover:bg-blue-50">
+              <Button className="bg-white text-blue-600 hover:bg-blue-50 cursor-pointer">
                 <Plus className="w-4 h-4 mr-2" />
                 Thêm quản lý
               </Button>
@@ -193,10 +193,10 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                   />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                     Hủy
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                     Thêm quản lý
                   </Button>
                 </div>
@@ -211,7 +211,7 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
               <p className="text-gray-500 text-center">Không có quản lý tòa nhà nào</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-blue-50">
@@ -236,7 +236,7 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50 cursor-pointer"
                             onClick={() => openEditDialog(manager)}
                           >
                             <Pencil className="w-4 h-4" />
@@ -244,7 +244,7 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            className="text-red-600 border-red-600 hover:bg-red-50 cursor-pointer"
                             onClick={() => openDeleteDialog(manager)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -276,7 +276,6 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                 id="edit-fullName"
                 value={editForm.fullName}
                 onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                required
               />
             </div>
             <div className="space-y-2">
@@ -305,10 +304,10 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
               />
             </div>
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setEditDialogOpen(false)}>
                 Hủy
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 Cập nhật
               </Button>
             </div>
@@ -327,8 +326,8 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 cursor-pointer">
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>

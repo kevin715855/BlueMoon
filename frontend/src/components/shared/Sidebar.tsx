@@ -1,4 +1,4 @@
-import { Home, FileText, CreditCard, Building, Users, UserCog, ClipboardList, LogOut } from "lucide-react";
+import { Home, FileText, CreditCard, Building, Users, UserCog, ClipboardList, LogOut, Receipt, Building2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Permissions, type UserRole } from "../../utils/permissions";
 
@@ -18,6 +18,8 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     // Dashboard - available to all
     items.push({ id: "dashboard", label: "Tổng quan", icon: Home });
 
+    items.push({ id: "accounts", label: "Tài khoản", icon: UserCog });
+
     // Resident-specific menu
     if (Permissions.canViewMyBills(userRole)) {
       items.push({ id: "bills", label: "Hóa đơn", icon: FileText });
@@ -28,13 +30,8 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     }
 
     // Accountant-specific menu
-    if (Permissions.canManageOfflinePayments(userRole) && userRole === "Accountant") {
-      items.push({ id: "offline-payments", label: "Thanh toán offline", icon: CreditCard });
-    }
-
-    // Manager/Admin menu items
-    if (Permissions.canManageAccounts(userRole)) {
-      items.push({ id: "accounts", label: "Tài khoản", icon: UserCog });
+    if (Permissions.canManageOfflinePayments(userRole)) {
+      items.push({ id: "offline-payments", label: "Thanh toán trực tiếp", icon: CreditCard });
     }
 
     if (Permissions.canManageResidents(userRole)) {
@@ -45,12 +42,20 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
       items.push({ id: "apartments", label: "Căn hộ", icon: Building });
     }
 
+    if (Permissions.canManageBuildings(userRole)) {
+      items.push({ id: "buildings", label: "Tòa nhà", icon: Building2 });
+    }
+
     if (Permissions.canManageBuildingManagers(userRole)) {
       items.push({ id: "building-managers", label: "Quản lý", icon: ClipboardList });
     }
 
     if (Permissions.canManageAccountants(userRole)) {
       items.push({ id: "accountants", label: "Kế toán", icon: ClipboardList });
+    }
+
+    if (Permissions.canViewReceipts(userRole)) {
+      items.push({ id: "receipts", label: "Biên lai", icon: Receipt });
     }
 
     return items;
@@ -72,7 +77,7 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors cursor-pointer ${
                 activeTab === item.id
                   ? "bg-blue-500 text-white shadow-lg"
                   : "text-blue-100 hover:bg-blue-700"
@@ -89,7 +94,7 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
         <Button
           variant="ghost"
           onClick={onLogout}
-          className="w-full justify-start gap-3 text-blue-100 hover:bg-blue-700 hover:text-white"
+          className="w-full justify-start gap-3 text-blue-100 hover:bg-blue-700 hover:text-white cursor-pointer"
         >
           <LogOut className="w-5 h-5" />
           Đăng xuất

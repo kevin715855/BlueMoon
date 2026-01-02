@@ -46,14 +46,6 @@ export interface AccountPasswordUpdate {
 export interface Apartment {
   apartmentID: string;
   numResident?: number;
-  status?: string;
-  buildingID?: string;
-}
-
-export interface ApartmentCreate {
-  apartmentID: string;
-  numResident?: number;
-  status?: string;
   buildingID?: string;
 }
 
@@ -138,10 +130,9 @@ export interface BuildingManagerUpdate {
 // Building Types
 export interface Building {
   buildingID: string;
-  buildingName?: string;
-  address?: string;
-  numFloors?: number;
   managerID?: number;
+  address?: string;
+  numApartment?: number;
 }
 
 export interface BuildingUpdateManager {
@@ -178,7 +169,7 @@ export interface PaymentTransaction {
   amount: number;
   paymentContent?: string;
   paymentMethod?: string;
-  status: "Pending" | "Success" | "Failed";
+  status: "Pending" | "Success" | "Failed" | "Expired";
   createdDate?: string;
   payDate?: string;
   gatewayTransCode?: string;
@@ -217,7 +208,7 @@ export interface ReceiptBillDetail {
   dueDate: string;
 }
 
-export interface ReceiptResponse {
+export interface Receipt {
   transID: number;
   residentID: number;
   residentName: string;
@@ -229,6 +220,49 @@ export interface ReceiptResponse {
   status: string;
   payDate: string;
   bills: ReceiptBillDetail[];
+}
+
+// Notification Types
+export interface Notification {
+  notificationID: number;
+  residentID: number;
+  title: string;
+  content: string;
+  createdDate: string;
+  isRead: boolean;
+  electricity?: number | null;
+  water?: number | null;
+}
+
+export interface BroadcastNotification {
+  title: string;
+  content: string;
+}
+
+// Accounting Types
+export interface MeterReadingCreate {
+  apartmentID: string;
+  month: number;
+  year: number;
+  oldElectricity: number;
+  newElectricity: number;
+  oldWater: number;
+  newWater: number;
+}
+
+export interface ServiceFeeCreate {
+  buildingID: string;
+  typeOfBill: string;
+  feePerUnit?: number | null;
+  flatFee?: number | null;
+  effectiveDate: string;
+}
+
+export interface CalculateBillsRequest {
+  month: number;
+  year: number;
+  deadline_day?: number;
+  overwrite?: boolean;
 }
 
 // ==================== API ERROR CLASS ====================
@@ -382,29 +416,6 @@ export const api = {
         { method: "GET" }
       );
     },
-
-    create: async (apartment: ApartmentCreate): Promise<Apartment> => {
-      return fetchApi<Apartment>("/apartments/add-new-apartment", {
-        method: "POST",
-        body: JSON.stringify(apartment),
-      });
-    },
-
-    update: async (
-      id: string,
-      apartment: Partial<Apartment>
-    ): Promise<Apartment> => {
-      return fetchApi<Apartment>(`/apartments/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(apartment),
-      });
-    },
-
-    delete: async (id: string): Promise<void> => {
-      return fetchApi<void>(`/apartments/${id}`, {
-        method: "DELETE",
-      });
-    },
   },
 
   // ==================== RESIDENTS ====================
@@ -452,6 +463,15 @@ export const api = {
       return fetchApi<void>(`/residents/${id}`, {
         method: "DELETE",
       });
+    },
+
+    getByApartment: async (apartmentId: string): Promise<Resident[]> => {
+      const allResidents = await fetchApi<Resident[]>(
+        `/api/residents/get-residents-data?skip=0&limit=1000`,
+        { method: "GET" }
+      );
+      // Filter by apartment ID on the client side
+      return allResidents.filter(r => r.apartmentID === apartmentId);
     },
   },
 
@@ -605,8 +625,94 @@ export const api = {
 
   // ==================== RECEIPTS ====================
   receipts: {
-    get: async (transactionId: number): Promise<ReceiptResponse> => {
-      return fetchApi<ReceiptResponse>(`/receipts/${transactionId}`, {
+    get: async (transactionId: number): Promise<Receipt> => {
+      return fetchApi<Receipt>(`/receipts/${transactionId}`, {
+        method: "GET",
+      });
+    },
+  },
+
+  // ==================== NOTIFICATIONS ====================
+  notifications: {
+    // Get my notifications
+    getMyNotifications: async (skip: number = 0, limit: number = 50): Promise<Notification[]> => {
+      return fetchApi<Notification[]>(
+        `/api/notification/my-notification?skip=${skip}&limit=${limit}`,
+        {
+          method: "GET",
+        }
+      );
+    },
+
+    // Mark notification as read
+    markAsRead: async (id: number): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>(`/api/notification/${id}/read`, {
+        method: "PUT",
+      });
+    },
+
+    // Get unread count
+    getUnreadCount: async (): Promise<{ count: number }> => {
+      return fetchApi<{ count: number }>("/api/notification/unread-count", {
+        method: "GET",
+      });
+    },
+
+    // Broadcast notification (Manager/Admin only)
+    broadcast: async (notification: BroadcastNotification): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>("/api/notification/broadcast", {
+        method: "POST",
+        body: JSON.stringify(notification),
+      });
+    },
+  },
+
+  // ==================== ACCOUNTING ====================
+  accounting: {
+    // Record meter readings
+    recordMeterReading: async (data: MeterReadingCreate): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>("/api/accounting/meter-readings", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
+    // Set service fees
+    setServiceFee: async (data: ServiceFeeCreate): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>("/api/accounting/service-fees", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
+    // Calculate monthly bills
+    calculateBills: async (
+      data: CalculateBillsRequest
+    ): Promise<{ status: string; message: string; count: number }> => {
+      return fetchApi<{ status: string; message: string; count: number }>(
+        "/api/accounting/bills/calculate",
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        }
+      );
+    },
+
+    // Get all bills with optional filters
+    getAllBills: async (
+      apartmentId?: string,
+      status?: string
+    ): Promise<Bill[]> => {
+      const params = new URLSearchParams();
+      if (apartmentId) params.append("apartment_id", apartmentId);
+      if (status) params.append("status", status);
+
+      const queryString = params.toString();
+      const endpoint = queryString
+        ? `/accounting/bills?${queryString}`
+        : "/accounting/bills";
+
+      return fetchApi<Bill[]>(endpoint, {
         method: "GET",
       });
     },

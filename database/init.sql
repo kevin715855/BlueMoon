@@ -1,4 +1,3 @@
-
 -- Tạo database
 
 CREATE DATABASE IF NOT EXISTS ApartmentManagement CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -92,7 +91,7 @@ CREATE TABLE IF NOT EXISTS PAYMENT_TRANSACTION (
     amount DECIMAL(18, 0) NOT NULL,
     paymentContent VARCHAR(50),
     paymentMethod VARCHAR(20),
-    status ENUM('Pending','Success','Failed') DEFAULT 'Pending',
+    status ENUM('Pending','Success','Failed','Expired') DEFAULT 'Pending',
     createdDate DATETIME DEFAULT CURRENT_TIMESTAMP(),
     payDate DATETIME NULL,
     gatewayTransCode VARCHAR(100) NULL,
