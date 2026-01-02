@@ -140,3 +140,14 @@ def get_only_admin(current_user = Depends(get_current_user)):
         )
     
     return current_user
+
+def get_manager_accountant(current_user = Depends(get_current_user)):
+    allowed_roles = ["Admin", "Manager", "Accountant"] 
+    
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền thực hiện thao tác này"
+        )
+    
+    return current_user
