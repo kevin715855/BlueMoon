@@ -11,6 +11,7 @@ class PaymentStatus(str, Enum):
     Pending = "Pending"
     Success = "Success"
     Failed = "Failed"
+    Expired = "Expired"
 
 class PaymentCreateRequest(BaseModel):
     """
@@ -34,7 +35,7 @@ class OfflinePaymentRequest(BaseModel):
     paymentMethod: str = Field(default="Offline", max_length=20, description="Phương thức thanh toán")
     bill_ids: List[int] = Field(..., description="Danh sách ID hóa đơn cần thanh toán", min_length=1)
 
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -227,7 +228,7 @@ class ReceiptBillDetail(BaseModel):
     billName: str
     amount: float
     dueDate: str
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 class ReceiptResponse(BaseModel):
@@ -243,5 +244,5 @@ class ReceiptResponse(BaseModel):
     status: str
     payDate: str
     bills: list[ReceiptBillDetail]
-    
+
     model_config = ConfigDict(from_attributes=True)

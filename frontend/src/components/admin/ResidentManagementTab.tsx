@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Checkbox } from "../ui/checkbox";
-import { ShieldAlert, Users, Plus, Pencil, Trash2 } from "lucide-react";
-import { api, type Resident, type ResidentCreate, type ResidentUpdate } from "../../services/api";
+import { ShieldAlert, Users, Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { api, type Resident, type ResidentCreate, type ResidentUpdate, type Apartment } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
@@ -19,7 +20,9 @@ interface ResidentManagementTabProps {
 
 export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
   const [residents, setResidents] = useState<Resident[]>([]);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingApartments, setLoadingApartments] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -29,7 +32,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
   const [createForm, setCreateForm] = useState<ResidentCreate>({
     apartmentID: "",
     fullName: "",
-    age: undefined,
+    age: 0,
     date: "",
     phoneNumber: "",
     isOwner: false,
@@ -39,7 +42,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
   const [editForm, setEditForm] = useState<ResidentUpdate>({
     apartmentID: "",
     fullName: "",
-    age: undefined,
+    age: 0,
     date: "",
     phoneNumber: "",
     isOwner: false,
@@ -66,6 +69,50 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
     }
   };
 
+  const loadApartments = async () => {
+    setLoadingApartments(true);
+    try {
+      const data = await api.apartments.getAll();
+      setApartments(data);
+    } catch (error) {
+      console.error("Failed to load apartments:", error);
+      toast.error("Không thể tải danh sách căn hộ");
+    } finally {
+      setLoadingApartments(false);
+    }
+  };
+
+  // Load apartments when create dialog opens
+  const handleCreateDialogOpen = (open: boolean) => {
+    setCreateDialogOpen(open);
+    if (open && apartments.length === 0) {
+      loadApartments();
+    }
+  };
+
+  // Load apartments when edit dialog opens
+  const openEditDialog = (resident: Resident) => {
+    setSelectedResident(resident);
+    setEditForm({
+      apartmentID: resident.apartmentID,
+      fullName: resident.fullName,
+      age: resident.age,
+      date: resident.date,
+      phoneNumber: resident.phoneNumber,
+      isOwner: resident.isOwner,
+      username: resident.username,
+    });
+    setEditDialogOpen(true);
+    if (apartments.length === 0) {
+      loadApartments();
+    }
+  };
+
+  const openDeleteDialog = (resident: Resident) => {
+    setSelectedResident(resident);
+    setDeleteDialogOpen(true);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -75,7 +122,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
       setCreateForm({
         apartmentID: "",
         fullName: "",
-        age: undefined,
+        age: 0,
         date: "",
         phoneNumber: "",
         isOwner: false,
@@ -114,25 +161,6 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
     }
   };
 
-  const openEditDialog = (resident: Resident) => {
-    setSelectedResident(resident);
-    setEditForm({
-      apartmentID: resident.apartmentID,
-      fullName: resident.fullName,
-      age: resident.age,
-      date: resident.date,
-      phoneNumber: resident.phoneNumber,
-      isOwner: resident.isOwner,
-      username: resident.username,
-    });
-    setEditDialogOpen(true);
-  };
-
-  const openDeleteDialog = (resident: Resident) => {
-    setSelectedResident(resident);
-    setDeleteDialogOpen(true);
-  };
-
   if (!canAccess) {
     return (
       <Card className="shadow-lg">
@@ -155,10 +183,10 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
     <div className="space-y-4">
       <Card className="shadow-lg border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Danh sách cư dân</CardTitle>
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <CardTitle className="py-4 text-white">Danh sách cư dân</CardTitle>
+          <Dialog open={createDialogOpen} onOpenChange={handleCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-white text-blue-600 hover:bg-blue-50">
+              <Button className="bg-white text-blue-600 hover:bg-blue-50 cursor-pointer">
                 <Plus className="w-4 h-4 mr-2" />
                 Thêm cư dân
               </Button>
@@ -167,7 +195,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
               <DialogHeader>
                 <DialogTitle>Thêm cư dân mới</DialogTitle>
                 <DialogDescription>
-                  Nhập thông tin cư dân mới vào hệ thống
+                  Nhập thông tin ư dân mới vào hệ thống
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
@@ -183,19 +211,52 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="create-apartmentID">Mã căn hộ</Label>
-                    <Input
-                      id="create-apartmentID"
+                    <Select
                       value={createForm.apartmentID}
-                      onChange={(e) => setCreateForm({ ...createForm, apartmentID: e.target.value })}
-                    />
+                      onValueChange={(value) => setCreateForm({ ...createForm, apartmentID: value })}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn căn hộ">
+                          {createForm.apartmentID || "Chọn căn hộ"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingApartments ? (
+                          <div className="p-4 text-center text-gray-500">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                              <span className="text-sm">Đang tải...</span>
+                            </div>
+                          </div>
+                        ) : apartments.length === 0 ? (
+                          <div className="p-4 text-center text-gray-500">
+                            <Building2 className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                            <p className="text-sm">Không có căn hộ nào</p>
+                          </div>
+                        ) : (
+                          apartments.map((apartment) => (
+                            <SelectItem key={apartment.apartmentID} value={apartment.apartmentID}>
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="font-medium">{apartment.apartmentID}</span>
+                                <span className="text-xs text-gray-500">
+                                  Hiện có {apartment.numResident || 0}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="create-age">Tuổi</Label>
                     <Input
                       id="create-age"
                       type="number"
-                      value={createForm.age || ""}
-                      onChange={(e) => setCreateForm({ ...createForm, age: e.target.value ? parseInt(e.target.value) : undefined })}
+                      min="0"
+                      max="120"
+                      value={createForm.age || 0}
+                      onChange={(e) => setCreateForm({ ...createForm, age: e.target.value ? parseInt(e.target.value) : 0 })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -228,17 +289,17 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
                   <Checkbox
                     id="create-isOwner"
                     checked={createForm.isOwner}
-                    onCheckedChange={(checked: any) => setCreateForm({ ...createForm, isOwner: checked === true })}
+                    onCheckedChange={(checked) => setCreateForm({ ...createForm, isOwner: checked === true })}
                   />
                   <Label htmlFor="create-isOwner" className="cursor-pointer">
                     Chủ hộ
                   </Label>
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                     Hủy
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                     Thêm cư dân
                   </Button>
                 </div>
@@ -253,7 +314,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
               <p className="text-gray-500 text-center">Không có cư dân nào</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-blue-50">
@@ -270,7 +331,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
                   {residents.map((resident) => (
                     <TableRow key={resident.residentID}>
                       <TableCell>{resident.residentID}</TableCell>
-                      <TableCell>{resident.fullName || "N/A"}</TableCell>
+                      <TableCell>{resident.fullName}</TableCell>
                       <TableCell>{resident.apartmentID || "N/A"}</TableCell>
                       <TableCell>{resident.age || "N/A"}</TableCell>
                       <TableCell>{resident.phoneNumber || "N/A"}</TableCell>
@@ -280,7 +341,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50 cursor-pointer"
                             onClick={() => openEditDialog(resident)}
                           >
                             <Pencil className="w-4 h-4" />
@@ -288,7 +349,7 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            className="text-red-600 border-red-600 hover:bg-red-50 cursor-pointer"
                             onClick={() => openDeleteDialog(resident)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -321,24 +382,56 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
                   id="edit-fullName"
                   value={editForm.fullName}
                   onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-apartmentID">Mã căn hộ</Label>
-                <Input
-                  id="edit-apartmentID"
+                <Select
                   value={editForm.apartmentID}
-                  onChange={(e) => setEditForm({ ...editForm, apartmentID: e.target.value })}
-                />
+                  onValueChange={(value) => setEditForm({ ...editForm, apartmentID: value })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn căn hộ">
+                      {editForm.apartmentID || "Chọn căn hộ"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingApartments ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm">Đang tải...</span>
+                        </div>
+                      </div>
+                    ) : apartments.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <Building2 className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">Không có căn hộ nào</p>
+                      </div>
+                    ) : (
+                      apartments.map((apartment) => (
+                        <SelectItem key={apartment.apartmentID} value={apartment.apartmentID}>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium">{apartment.apartmentID}</span>
+                            <span className="text-xs text-gray-500">
+                              Hiện có {apartment.numResident || 0}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-age">Tuổi</Label>
                 <Input
                   id="edit-age"
                   type="number"
-                  value={editForm.age || ""}
-                  onChange={(e) => setEditForm({ ...editForm, age: e.target.value ? parseInt(e.target.value) : undefined })}
+                  min="0"
+                  max="120"
+                  value={editForm.age || 0}
+                  onChange={(e) => setEditForm({ ...editForm, age: e.target.value ? parseInt(e.target.value) : 0 })}
                 />
               </div>
               <div className="space-y-2">
@@ -371,17 +464,17 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
               <Checkbox
                 id="edit-isOwner"
                 checked={editForm.isOwner}
-                onCheckedChange={(checked: any) => setEditForm({ ...editForm, isOwner: checked === true })}
+                onCheckedChange={(checked) => setEditForm({ ...editForm, isOwner: checked === true })}
               />
               <Label htmlFor="edit-isOwner" className="cursor-pointer">
                 Chủ hộ
               </Label>
             </div>
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setEditDialogOpen(false)}>
                 Hủy
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 Cập nhật
               </Button>
             </div>
@@ -400,8 +493,8 @@ export function ResidentManagementTab({ role }: ResidentManagementTabProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 cursor-pointer">
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>

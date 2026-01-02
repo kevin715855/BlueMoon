@@ -13,7 +13,7 @@ class PaymentTransaction(Base):
     amount = Column(DECIMAL(18, 0), nullable=False)
     paymentContent = Column(String(50))
     paymentMethod = Column(String(20))
-    status = Column(Enum("Pending", "Success", "Failed",
+    status = Column(Enum("Pending", "Success", "Failed", "Expired",
                     name="payment_status"), default="Pending", index=True)
     createdDate = Column(DateTime, index=True)
     payDate = Column(DateTime)

@@ -85,6 +85,13 @@ export function ResidentPaymentsTab() {
             Thất bại
           </Badge>
         );
+      case "Expired":
+        return (
+          <Badge className="bg-red-500 flex items-center gap-1">
+            <XCircle className="w-3 h-3" />
+            Hết hạn
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
@@ -100,7 +107,7 @@ export function ResidentPaymentsTab() {
       {unpaidBills.length > 0 && (
         <Card className="shadow-lg border-blue-200">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-            <CardTitle className="text-white">Hóa đơn chưa thanh toán</CardTitle>
+            <CardTitle className="py-2 text-white">Hóa đơn chưa thanh toán</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -150,7 +157,7 @@ export function ResidentPaymentsTab() {
       {/* Payment History */}
       <Card className="shadow-lg">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-          <CardTitle className="text-white">Lịch sử giao dịch</CardTitle>
+          <CardTitle className="py-2 text-white">Lịch sử giao dịch</CardTitle>
         </CardHeader>
         <CardContent>
           {payments.length === 0 ? (
@@ -171,12 +178,12 @@ export function ResidentPaymentsTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map((payment) => (
+                {payments.reverse().map((payment) => (
                   <TableRow key={payment.transID}>
                     <TableCell>#{payment.transID}</TableCell>
                     <TableCell>{payment.paymentContent || "N/A"}</TableCell>
                     <TableCell>{
-                        payment.paymentMethod == "Online_Payment" ? "Online" : payment.paymentMethod || "N/A"
+                      payment.paymentMethod != "Offline" ? "Online" : payment.paymentMethod || "N/A"
                     }</TableCell>
                     <TableCell>{payment.amount.toLocaleString("vi-VN")} ₫</TableCell>
                     <TableCell>

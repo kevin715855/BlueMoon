@@ -60,7 +60,7 @@ export function ResidentBillsTab() {
   return (
     <Card className="shadow-lg">
       <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-        <CardTitle className="text-white">Danh sách hóa đơn của tôi</CardTitle>
+        <CardTitle className="py-2 text-white">Danh sách hóa đơn của tôi</CardTitle>
       </CardHeader>
       <CardContent>
         {bills.length === 0 ? (
