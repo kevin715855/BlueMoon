@@ -5,10 +5,10 @@ from typing import List
 from backend.app.core.db import get_db
 from backend.app.models.notification import Notification
 from backend.app.models.resident import Resident
-from backend.app.schemas.notification import NotificationRead, BroadcastRequest, MeterNotificationList
+# Lưu ý: Cần đảm bảo NotificationRead trong schemas có thêm trường electricity, water
+from backend.app.schemas.notification import NotificationRead, BroadcastRequest
 from backend.app.services.notification_service import NotificationService 
-from backend.app.api.auth import get_current_user, get_only_admin, get_current_manager
-
+from backend.app.api.auth import get_current_user, get_current_manager
 router = APIRouter()
 
 @router.get("/my-notification", response_model=List[NotificationRead])
@@ -18,7 +18,7 @@ def get_my_notifications(
     current_user = Depends(get_current_user)
 ):
     """
-    API xem danh sách
+    Lấy danh sách thông báo của người dùng đang đăng nhập.
     """
     resident = db.query(Resident).filter(Resident.username == current_user.username).first()
     if not resident:
@@ -30,19 +30,31 @@ def get_my_notifications(
         .offset(skip).limit(limit).all()
 
 @router.put("/{id}/read")
-def mark_as_read(id: int, db: Session = Depends(get_db)):
-    """Đánh dấu đã đọc"""
+def mark_as_read(
+    id: int, 
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Đánh dấu một thông báo là 'Đã đọc'"""
+    
+    resident = db.query(Resident).filter(Resident.username == current_user.username).first()
+    if not resident:
+        raise HTTPException(401, "Không xác định được cư dân")
+
     noti = db.query(Notification).filter(Notification.notificationID == id).first()
     if not noti: 
         raise HTTPException(404, "Không tìm thấy thông báo")
     
+    if noti.residentID != resident.residentID:
+        raise HTTPException(403, "Bạn không có quyền thao tác trên thông báo này")
+    
     noti.isRead = True
     db.commit()
-    return {"message": "Đã xem"}
+    return {"message": "Đã đánh dấu đã đọc"}
 
 @router.get("/unread-count")
 def count_unread(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Đếm số chưa đọc"""
+    """Đếm số lượng thông báo chưa đọc (Dùng để hiển thị chấm đỏ trên icon chuông)"""
     resident = db.query(Resident).filter(Resident.username == current_user.username).first()
     if not resident: 
         return {"count": 0}
@@ -59,34 +71,9 @@ def broadcast_notification(
     db: Session = Depends(get_db),
     manager = Depends(get_current_manager)
 ):
-    """Manager gửi thông báo chung"""
+    """
+    Gửi thông báo chung cho toàn bộ cư dân (Ví dụ: Cắt nước, Họp tổ dân phố).
+    """
     count = NotificationService.create_broadcast(db, payload.title, payload.content)
     
-    return {"message": f"Đã gửi thông báo đến {count} cư dân"}
-
-@router.post("/send-monthly-readings", status_code=status.HTTP_201_CREATED)
-def send_monthly_readings(
-    payload: MeterNotificationList, # Nhận cục JSON to đùng từ Frontend
-    db: Session = Depends(get_db),
-    manager = Depends(get_current_manager)
-):
-    """
-    API để Admin đẩy số điện nước của nhiều hộ dân lên cùng lúc.
-    Frontend sẽ gửi dạng:
-    {
-        "month": 12,
-        "year": 2025,
-        "readings": [
-            {"residentID": 1, "electricity": 100, "water": 10},
-            {"residentID": 2, "electricity": 150, "water": 12}
-        ]
-    }
-    """
-    count = NotificationService.send_meter_notifications(
-        db=db, 
-        month=payload.month, 
-        year=payload.year, 
-        readings_data=payload.readings
-    )
-    
-    return {"message": f"Đã gửi thông báo chỉ số điện nước cho {count} cư dân."}
+    return {"message": f"Đã gửi thông báo thành công đến {count} cư dân"}
