@@ -1,12 +1,12 @@
 import datetime as dt
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, DECIMAL
-from backend.app.core.db import Base
+from backend.app.models.base import Base
 
 class Notification(Base):
-    __tablename__ = "notifications"
+    __tablename__ = "NOTIFICATION"
 
     notificationID = Column(Integer, primary_key=True, index=True)
-    residentID = Column(Integer, ForeignKey("residents.residentID"), nullable=False)
+    residentID = Column(Integer, ForeignKey("RESIDENT.residentID"), nullable=False)
     
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=True)
