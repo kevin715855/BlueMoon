@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.db import get_db
 from backend.app.core.security import create_access_token, decode_access_token, verify_password
 from backend.app.models.account import Account
+from backend.app.models.accountant import Accountant
 from backend.app.schemas.auth import LoginRequest, LoginResponse, MeResponse, TokenData
 
 router = APIRouter()
@@ -105,7 +106,7 @@ def get_me(current_user: TokenData = Depends(get_current_user)) -> MeResponse:
         role=current_user.role
     )
 
-def get_current_accountant(current_user = Depends(get_current_user)):
+def get_current_accountant(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     allowed_roles = ["Accountant", "Admin"] 
     
     if current_user.role not in allowed_roles:
@@ -114,7 +115,9 @@ def get_current_accountant(current_user = Depends(get_current_user)):
             detail="Bạn không có quyền thực hiện thao tác này"
         )
     
-    return current_user
+    current_accountant = db.query(Accountant).filter(current_user.username==Accountant.username).first()
+    
+    return current_accountant
 
 def get_current_manager(current_user = Depends(get_current_user)):
     allowed_roles = ["Manager", "Admin"] 
