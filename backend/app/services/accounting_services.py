@@ -1,4 +1,4 @@
-import datetime as dt
+from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -50,7 +50,7 @@ class AccountingService:
     @staticmethod
     def calculate_monthly_bills(db: Session, month: int, year: int, accountant_id: int, deadline_day: int, overwrite: bool = False):
         """Tính toán và tạo hóa đơn cho 3 luồng: Điện, Nước, Phí dịch vụ"""
-        deadline_date = dt.date(year, month, deadline_day)
+        deadline_date = date(year, month, deadline_day)
 
         existing_bills = db.query(Bill).filter(
             Bill.deadline == deadline_date,
@@ -95,7 +95,7 @@ class AccountingService:
                     bill_elec = Bill(
                         apartmentID=apt.apartmentID, 
                         accountantID=accountant_id,
-                        createDate=dt.datetime.now(),
+                        createDate=datetime.now(),
                         deadline=deadline_date,
                         typeOfBill="ELECTRICITY",
                         amount=elec_total,
@@ -115,7 +115,7 @@ class AccountingService:
                     bill_water = Bill(
                         apartmentID=apt.apartmentID,
                         accountantID=accountant_id,
-                        createDate=dt.datetime.now(),
+                        createDate=datetime.now(),
                         deadline=deadline_date,
                         typeOfBill="WATER",
                         amount=water_total,
@@ -135,7 +135,7 @@ class AccountingService:
                 bill_service = Bill(
                     apartmentID=apt.apartmentID,
                     accountantID=accountant_id,
-                    createDate=dt.datetime.now(),
+                    createDate=datetime.now(),
                     deadline=deadline_date,
                     typeOfBill="SERVICE",
                     amount=service_sum,
@@ -175,10 +175,14 @@ class AccountingService:
         Dùng cho: Sửa chữa, Phạt, Dịch vụ riêng lẻ...
         Logic: Tạo bill -> Lưu DB -> Thông báo riêng cho căn hộ đó.
         """
+        createDate = datetime.now()
+        month = createDate.month
+        year = createDate.year
+
         new_bill = Bill(
             apartmentID=data.apartmentID,
             accountantID=accountant_id,
-            createDate=dt.datetime.now(),
+            createDate=createDate,
             deadline=data.deadline,
             typeOfBill=data.typeOfBill,
             amount=data.amount,
@@ -191,7 +195,9 @@ class AccountingService:
 
         NotificationService.notify_new_bill(
             db=db, 
-            bill_id=new_bill.billID, 
+            bill_id=new_bill.billID,
+            month=month,
+            year=year 
         )
         
         return new_bill

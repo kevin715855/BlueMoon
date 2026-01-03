@@ -73,10 +73,10 @@ class NotificationService:
         Tạo thông báo kết quả giao dịch.
         content đầu vào là chuỗi dạng: "ELECTRICITY, WATER"
         """
-        createDate =now = datetime.now()
+        createDate = datetime.now()
 
-        month = now.month
-        year = now.year
+        month = createDate.month
+        year = createDate.year
 
         display_content = content.replace("ELECTRICITY", f"Tiền Điện tháng {month}/{year}") \
                                  .replace("WATER", f"Tiền Nước tháng {month}/{year}") \
