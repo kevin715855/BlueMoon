@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
@@ -10,7 +10,7 @@ from backend.app.models.resident import Resident
 
 router = APIRouter()
 
-@router.post("/create-qr", summary="Create QR")
+@router.post("/create-transaction", summary="Create QR and transaction")
 def create_qr_code(
     apartment_id: str,
     payload: PaymentCreateRequest,
