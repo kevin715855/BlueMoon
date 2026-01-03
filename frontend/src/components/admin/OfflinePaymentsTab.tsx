@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { ShieldAlert, Search, CreditCard, QrCode, Wallet, Building2 } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { api, type Bill, type QRCodeResponse } from "../../services/api";
+import { api, type Bill, type Apartment } from "../../services/api";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
 
@@ -32,6 +32,8 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
 
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+
   if (!canAccess) {
     return (
       <Card className="shadow-lg">
@@ -45,6 +47,19 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
       </Card>
     );
   }
+
+  useEffect(() => {
+    const fetchApartments = async () => {
+      try {
+        const apartments = await api.apartments.getAll();
+        setApartments(apartments);
+      } catch (error: any) {
+        toast.error(error.message || "Không thể tải danh sách căn hộ");
+      }
+    };
+
+    fetchApartments();
+  }, []);
 
   const handleSearchBills = async () => {
     if (!apartmentId.trim()) {
@@ -116,30 +131,11 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
   const handleDirectPayment = async () => {
     setProcessingPayment(true);
     try {
-      // Get residents from the apartment
-      const residents = await api.residents.getByApartment(apartmentId.trim());
-
-      if (residents.length === 0) {
-        toast.error(`Không tìm thấy cư dân cho căn hộ ${apartmentId}`);
-        setProcessingPayment(false);
-        return;
+      const { transaction_id, trans_code, total_amount }= await api.offlinePayments.createQR(selectedBills);
+      const verifyMessage = await api.offlinePayments.verifyTransaction(trans_code, total_amount);
+      if (verifyMessage.success) {
+        toast.success(`Thanh toán thành công! Mã giao dịch: #${transaction_id}`);
       }
-
-      // Get the first owner or the first resident
-      const primaryResident = residents.find(r => r.isOwner) || residents[0];
-
-      const totalAmount = unpaidBills
-        .filter(bill => selectedBills.includes(bill.billID))
-        .reduce((sum, bill) => sum + (bill.total || 0), 0);
-
-      const response = await api.offlinePayments.create({
-        residentID: primaryResident.residentID,
-        paymentContent: `Thanh toán offline ${selectedBills.length} hóa đơn - Căn hộ ${apartmentId} - ${primaryResident.fullName}`,
-        paymentMethod: "Tiền mặt",
-        bill_ids: selectedBills,
-      });
-
-      toast.success(`Thanh toán thành công! Mã giao dịch: #${response.transID}`);
 
       // Reset and refresh
       setSelectedBills([]);
@@ -183,25 +179,27 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
               <Label htmlFor="apartmentId" className="text-gray-700 mb-2 block">
                 Mã căn hộ
               </Label>
-              <Input
-                id="apartmentId"
-                type="text"
-                placeholder="Nhập mã căn hộ (VD: A101, B205)"
+              <Select
                 value={apartmentId}
-                onChange={(e) => setApartmentId(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearchBills();
-                  }
-                }}
-                className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              />
+                onValueChange={(value) => setApartmentId(value)}
+              >
+                <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500 cursor-pointer">
+                  <SelectValue placeholder="Chọn mã căn hộ (VD: A101, B205)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {apartments.map((apartment) => (
+                    <SelectItem key={apartment.apartmentID} value={apartment.apartmentID}>
+                      {apartment.apartmentID}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-end">
               <Button
                 onClick={handleSearchBills}
                 disabled={searching}
-                className="h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6"
+                className="h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 cursor-pointer"
               >
                 {searching ? (
                   <div className="flex items-center gap-2">
@@ -301,7 +299,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                   <Button
                     onClick={handleOpenPaymentModal}
                     disabled={selectedBills.length === 0}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white h-12"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white h-12 cursor-pointer"
                   >
                     <Wallet className="w-5 h-5 mr-2" />
                     Xử lý thanh toán ({selectedBills.length} hóa đơn)
@@ -332,7 +330,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                 <button
                   onClick={() => handlePaymentMethodSelect("qr")}
                   disabled={processingPayment}
-                  className="flex flex-col items-center justify-center p-8 border-2 border-blue-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-all group"
+                  className="flex flex-col items-center justify-center p-8 border-2 border-blue-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-all group cursor-pointer"
                 >
                   <div className="bg-blue-100 rounded-full p-4 mb-4 group-hover:bg-blue-200 transition-colors">
                     <QrCode className="w-12 h-12 text-blue-600" />
@@ -346,7 +344,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                 <button
                   onClick={() => handlePaymentMethodSelect("direct")}
                   disabled={processingPayment}
-                  className="flex flex-col items-center justify-center p-8 border-2 border-green-300 rounded-lg hover:bg-green-50 hover:border-green-500 transition-all group"
+                  className="flex flex-col items-center justify-center p-8 border-2 border-green-300 rounded-lg hover:bg-green-50 hover:border-green-500 transition-all group cursor-pointer"
                 >
                   <div className="bg-green-100 rounded-full p-4 mb-4 group-hover:bg-green-200 transition-colors">
                     <Wallet className="w-12 h-12 text-green-600" />
@@ -376,7 +374,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                     setPaymentMethod(null);
                     setQrCodeUrl(null);
                   }}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer"
                 >
                   Đóng
                 </Button>

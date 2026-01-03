@@ -17,6 +17,8 @@ export function ResidentPaymentsTab() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
 
+  const paymentsInOrder = [...payments].reverse();
+
   useEffect(() => {
     loadData();
   }, []);
@@ -178,7 +180,7 @@ export function ResidentPaymentsTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.reverse().map((payment) => (
+                {paymentsInOrder.map((payment) => (
                   <TableRow key={payment.transID}>
                     <TableCell>#{payment.transID}</TableCell>
                     <TableCell>{payment.paymentContent || "N/A"}</TableCell>

@@ -175,17 +175,6 @@ export interface PaymentTransaction {
   gatewayTransCode?: string;
 }
 
-export interface PaymentCreateRequest {
-  bill_ids: number[];
-}
-
-export interface OfflinePaymentRequest {
-  residentID: number;
-  paymentContent: string;
-  paymentMethod?: string;
-  bill_ids: number[];
-}
-
 export interface PaymentResponse {
   transID: number;
   status: string;
@@ -263,6 +252,11 @@ export interface CalculateBillsRequest {
   year: number;
   deadline_day?: number;
   overwrite?: boolean;
+}
+
+export interface VerifyTransactionResponse {
+  message: string;
+  success: boolean;
 }
 
 // ==================== API ERROR CLASS ====================
@@ -467,7 +461,7 @@ export const api = {
 
     getByApartment: async (apartmentId: string): Promise<Resident[]> => {
       const allResidents = await fetchApi<Resident[]>(
-        `/api/residents/get-residents-data?skip=0&limit=1000`,
+        `/residents/get-residents-data?skip=0&limit=1000`,
         { method: "GET" }
       );
       // Filter by apartment ID on the client side
@@ -613,14 +607,19 @@ export const api = {
 
   // ==================== OFFLINE PAYMENTS ====================
   offlinePayments: {
-    create: async (
-      payment: OfflinePaymentRequest
-    ): Promise<PaymentResponse> => {
-      return fetchApi<PaymentResponse>("/offline-payments/offline_payment", {
+    createQR: async (billIds: number[]): Promise<QRCodeResponse> => {
+      return fetchApi<QRCodeResponse>("/offline-payments/create-qr", {
         method: "POST",
-        body: JSON.stringify(payment),
+        body: JSON.stringify({ bill_ids: billIds }),
       });
     },
+
+    verifyTransaction: async (content: string, amount: number): Promise<VerifyTransactionResponse> => {
+      return fetchApi<VerifyTransactionResponse>("/offline-payments/verify-transaction", {
+        method: "POST",
+        body: JSON.stringify({ content, transferAmount: amount }),
+      });
+    }
   },
 
   // ==================== RECEIPTS ====================
