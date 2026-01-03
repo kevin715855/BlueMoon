@@ -112,6 +112,27 @@ class PaymentService:
         if not transaction:
             return {"success": False, "message": f"Không tìm thấy Transaction ID {trans_id}"}
 
+        time_limit = timedelta(minutes=1)
+        
+        if datetime.now() - transaction.createdDate > time_limit:
+            
+            transaction.status = 'Expired'
+            db.commit()
+            
+            NotificationService.notify_payment_result(
+                db=db,
+                resident_id=transaction.residentID,
+                status="Expired",
+                amount=float(amount_in),
+                trans_id=transaction.transID,
+                content=""
+            )
+            
+            return {
+                "success": False, 
+                "message": "Giao dịch đã hết hạn thanh toán."
+            }
+        
         # 3. Kiểm tra Idempotency
         if transaction.status == 'Success':
             return {"success": True, "message": "Giao dịch này đã được thực hiện"}
