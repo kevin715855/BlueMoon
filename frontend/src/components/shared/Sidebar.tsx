@@ -1,4 +1,4 @@
-import { Home, FileText, CreditCard, Building, Users, UserCog, ClipboardList, LogOut, Receipt, Building2, Calculator } from "lucide-react";
+import { Home, FileText, CreditCard, Building, Users, UserCog, ClipboardList, LogOut, Receipt, Building2, Calculator, Bell } from "lucide-react";
 import { Button } from "../ui/button";
 import { Permissions, type UserRole } from "../../utils/permissions";
 
@@ -20,7 +20,10 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
 
     items.push({ id: "accounts", label: "Tài khoản", icon: UserCog });
 
-    // Resident-specific menu
+    if (Permissions.canViewNotifications(userRole)) {
+      items.push({ id: "notifications", label: "Thông báo", icon: Bell });
+    }
+
     if (Permissions.canViewMyBills(userRole)) {
       items.push({ id: "bills", label: "Hóa đơn", icon: FileText });
     }
@@ -60,7 +63,6 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     if (Permissions.canViewReceipts(userRole)) {
       items.push({ id: "receipts", label: "Biên lai", icon: Receipt });
     }
-
 
     return items;
   };

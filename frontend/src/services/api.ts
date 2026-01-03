@@ -636,7 +636,7 @@ export const api = {
     // Get my notifications
     getMyNotifications: async (skip: number = 0, limit: number = 50): Promise<Notification[]> => {
       return fetchApi<Notification[]>(
-        `/api/notification/my-notification?skip=${skip}&limit=${limit}`,
+        `/notification/my-notification?skip=${skip}&limit=${limit}`,
         {
           method: "GET",
         }
@@ -645,21 +645,21 @@ export const api = {
 
     // Mark notification as read
     markAsRead: async (id: number): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>(`/api/notification/${id}/read`, {
+      return fetchApi<{ message: string }>(`/notification/${id}/read`, {
         method: "PUT",
       });
     },
 
     // Get unread count
     getUnreadCount: async (): Promise<{ count: number }> => {
-      return fetchApi<{ count: number }>("/api/notification/unread-count", {
+      return fetchApi<{ count: number }>("/notification/unread-count", {
         method: "GET",
       });
     },
 
     // Broadcast notification (Manager/Admin only)
     broadcast: async (notification: BroadcastNotification): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>("/api/notification/broadcast", {
+      return fetchApi<{ message: string }>("/notification/broadcast", {
         method: "POST",
         body: JSON.stringify(notification),
       });
@@ -670,7 +670,7 @@ export const api = {
   accounting: {
     // Record meter readings
     recordMeterReading: async (data: MeterReadingCreate): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>("/api/accounting/meter-readings", {
+      return fetchApi<{ message: string }>("/accounting/meter-readings", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -678,7 +678,7 @@ export const api = {
 
     // Set service fees
     setServiceFee: async (data: ServiceFeeCreate): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>("/api/accounting/service-fees", {
+      return fetchApi<{ message: string }>("/accounting/service-fees", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -689,7 +689,7 @@ export const api = {
       data: CalculateBillsRequest
     ): Promise<{ status: string; message: string; count: number }> => {
       return fetchApi<{ status: string; message: string; count: number }>(
-        "/api/accounting/bills/calculate",
+        "/accounting/bills/calculate",
         {
           method: "POST",
           body: JSON.stringify(data),
