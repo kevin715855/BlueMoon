@@ -5,6 +5,7 @@ from sqlalchemy import func
 from backend.app.models.service_fee import ServiceFee
 from backend.app.models.apartment import Apartment
 from backend.app.models.bill import Bill
+from backend.app.schemas.bill import BillCreate
 from backend.app.models.meter_reading import MeterReading
 
 from backend.app.models.transaction_detail import TransactionDetail
@@ -167,6 +168,34 @@ class AccountingService:
             msg = f"Tạo mới {fee_data.serviceName} thành công."
         db.commit()
         return msg
+    
+    @staticmethod
+    def create_manual_bill(db: Session, data: BillCreate, accountant_id: int):
+        """
+        Dùng cho: Sửa chữa, Phạt, Dịch vụ riêng lẻ...
+        Logic: Tạo bill -> Lưu DB -> Thông báo riêng cho căn hộ đó.
+        """
+        new_bill = Bill(
+            apartmentID=data.apartmentID,
+            accountantID=accountant_id,
+            createDate=dt.datetime.now(),
+            deadline=data.deadline,
+            typeOfBill=data.typeOfBill,
+            amount=data.amount,
+            total=data.amount,
+            status='Unpaid'
+        )
+        db.add(new_bill)
+        db.commit()
+        db.refresh(new_bill)
+
+        NotificationService.notify_new_bill(
+            db=db, 
+            bill_id=new_bill.billID, 
+        )
+        
+        return new_bill
+
 
     @staticmethod
     def get_all_bills(db: Session, apartment_id=None, status=None):

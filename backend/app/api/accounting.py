@@ -10,7 +10,6 @@ from backend.app.schemas.service_fee import ServiceFeeCreate
 from backend.app.schemas.bill import BillRead, BillCreate
 from backend.app.services.accounting_services import AccountingService
 
-# Thêm Schema để test nhập chỉ số
 class MeterReadingCreate(BaseModel):
     apartmentID: str
     month: int
@@ -24,16 +23,14 @@ class CalculateRequest(BaseModel):
     month: int
     year: int
     deadline_day: int = 10
-    overwrite: bool = False # Đã xóa phần "readings" vì giờ lấy từ DB
+    overwrite: bool = False
 
 router = APIRouter()
 
-# --- ENDPOINT MỚI ĐỂ TEST ---
 @router.post("/meter-readings", summary="0. Nhập chỉ số điện nước (Dữ liệu nguồn)")
 def record_meter_reading(data: MeterReadingCreate, db: Session = Depends(get_db), accountant: Accountant = Depends(get_current_accountant)):
     from backend.app.models.meter_reading import MeterReading
     
-    # Xóa cũ nếu có để test cho dễ
     db.query(MeterReading).filter(
         MeterReading.apartmentID == data.apartmentID,
         MeterReading.month == data.month,
@@ -73,6 +70,19 @@ def calculate_bills(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/bills", response_model=List[BillRead], summary="4. Xem danh sách hóa đơn")
+@router.post("/bills/manual", summary="4. Tạo hóa đơn lẻ")
+def create_manual_bill(
+    data: BillCreate, 
+    db: Session = Depends(get_db),
+    accountant: Accountant = Depends(get_current_accountant)
+):
+    try:
+        new_bill = AccountingService.create_manual_bill(db, data, accountant.accountantID)
+        return {"message": "Tạo hóa đơn thành công", "billID": new_bill.billID}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/bills", response_model=List[BillRead], summary="5. Xem danh sách hóa đơn")
 def get_bills(apartment_id: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
     return AccountingService.get_all_bills(db, apartment_id, status)
