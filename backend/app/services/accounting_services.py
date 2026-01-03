@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -50,7 +50,7 @@ class AccountingService:
     @staticmethod
     def calculate_monthly_bills(db: Session, month: int, year: int, accountant_id: int, deadline_day: int, overwrite: bool = False):
         """Tính toán và tạo hóa đơn cho 3 luồng: Điện, Nước, Phí dịch vụ"""
-        deadline_date = datetime.date(year, month, deadline_day)
+        deadline_date = date(year, month, deadline_day)
 
         existing_bills = db.query(Bill).filter(
             Bill.deadline == deadline_date,
