@@ -46,6 +46,10 @@ class OfflinePaymentRequest(BaseModel):
             }
         }
 
+class OfflinePaymentRespone(BaseModel):
+    content: str
+    transferAmount: float
+
 # ==================== PAYMENT TRANSACTION ====================
 
 class PaymentTransactionBase(BaseModel):
