@@ -1,9 +1,21 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { UserPlus, Check, Lock, User, KeyRound } from "lucide-react";
 import { api, type AccountCreate } from "../../services/api";
 import { Permissions, type UserRole } from "../../utils/permissions";
@@ -101,7 +113,9 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                   <UserPlus className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-white">Tạo tài khoản mới</CardTitle>
+                  <CardTitle className="text-white">
+                    Tạo tài khoản mới
+                  </CardTitle>
                   <CardDescription className="text-blue-100">
                     Nhập thông tin để tạo tài khoản người dùng
                   </CardDescription>
@@ -125,12 +139,19 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                       placeholder="Nhập tên đăng nhập"
                       className="pl-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                       value={createForm.username}
-                      onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          username: e.target.value,
+                        })
+                      }
                       required
                       minLength={3}
                     />
                   </div>
-                  <p className="text-xs text-gray-500">Tên đăng nhập phải có ít nhất 3 ký tự</p>
+                  <p className="text-xs text-gray-500">
+                    Tên đăng nhập phải có ít nhất 3 ký tự
+                  </p>
                 </div>
 
                 {/* Role Field */}
@@ -140,7 +161,9 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                   </Label>
                   <Select
                     value={createForm.role}
-                    onValueChange={(value) => setCreateForm({ ...createForm, role: value as UserRole })}
+                    onValueChange={(value) =>
+                      setCreateForm({ ...createForm, role: value as UserRole })
+                    }
                   >
                     <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                       <SelectValue placeholder="Chọn vai trò" />
@@ -187,12 +210,19 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                       placeholder="Nhập mật khẩu"
                       className="pl-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                       value={createForm.password}
-                      onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          password: e.target.value,
+                        })
+                      }
                       required
                       minLength={6}
                     />
                   </div>
-                  <p className="text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
+                  <p className="text-xs text-gray-500">
+                    Mật khẩu phải có ít nhất 6 ký tự
+                  </p>
                 </div>
 
                 {/* Confirm Password Field */}
@@ -221,7 +251,9 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                           Mật khẩu khớp
                         </span>
                       ) : (
-                        <span className="text-red-600">Mật khẩu không khớp</span>
+                        <span className="text-red-600">
+                          Mật khẩu không khớp
+                        </span>
                       )}
                     </div>
                   )}
@@ -231,7 +263,7 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer"
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
@@ -286,7 +318,9 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                     minLength={6}
                   />
                 </div>
-                <p className="text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
+                <p className="text-xs text-gray-500">
+                  Mật khẩu phải có ít nhất 6 ký tự
+                </p>
               </div>
 
               {/* Confirm New Password Field */}
@@ -325,7 +359,7 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
               <Button
                 type="submit"
                 disabled={passwordChangeLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer"
               >
                 {passwordChangeLoading ? (
                   <div className="flex items-center gap-2">
@@ -343,7 +377,9 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
 
             {/* Password Tips */}
             <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <h4 className="font-semibold text-amber-900 mb-2 text-sm">💡 Gợi ý mật khẩu an toàn:</h4>
+              <h4 className="font-semibold text-amber-900 mb-2 text-sm">
+                💡 Gợi ý mật khẩu an toàn:
+              </h4>
               <ul className="space-y-1 text-xs text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>

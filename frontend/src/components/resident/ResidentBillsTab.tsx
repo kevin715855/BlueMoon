@@ -1,14 +1,41 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { Badge } from "../ui/badge";
 import { CheckCircle, Clock, XCircle, FileText } from "lucide-react";
 import { api, type Bill } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
+import { subMonths } from "date-fns";
 
 export function ResidentBillsTab() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const billsInOrder = [...bills].reverse();
+  const toBillTypeString = (bill: Bill) => {
+    const deadline = new Date(bill.deadline!);
+
+    const lastMonth = subMonths(deadline, 1);
+    const month = lastMonth.getMonth() + 1;
+    const year = lastMonth.getFullYear();
+
+    if (bill.typeOfBill === "SERVICE") {
+      return `Phí Dịch Vụ Tháng ${month}/${year}`;
+    } else if (bill.typeOfBill === "WATER") {
+      return `Tiền Nước Tháng ${month}/${year}`;
+    } else if (bill.typeOfBill === "ELECTRICITY") {
+      return `Tiền Điện Tháng ${month}/${year}`;
+    } else {
+      return bill.typeOfBill;
+    }
+  };
 
   useEffect(() => {
     loadBills();
@@ -60,7 +87,9 @@ export function ResidentBillsTab() {
   return (
     <Card className="shadow-lg">
       <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-        <CardTitle className="py-2 text-white">Danh sách hóa đơn của tôi</CardTitle>
+        <CardTitle className="py-2 text-white">
+          Danh sách hóa đơn của tôi
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {bills.length === 0 ? (
@@ -69,40 +98,44 @@ export function ResidentBillsTab() {
             <p className="text-gray-500 text-center">Không có hóa đơn nào</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-blue-50">
-                <TableHead className="text-blue-900">Mã hóa đơn</TableHead>
-                <TableHead className="text-blue-900">Loại hóa đơn</TableHead>
-                <TableHead className="text-blue-900">Ngày tạo</TableHead>
-                <TableHead className="text-blue-900">Hạn thanh toán</TableHead>
-                <TableHead className="text-blue-900">Số tiền</TableHead>
-                <TableHead className="text-blue-900">Trạng thái</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bills.map((bill) => (
-                <TableRow key={bill.billID}>
-                  <TableCell>#{bill.billID}</TableCell>
-                  <TableCell>{bill.typeOfBill || "N/A"}</TableCell>
-                  <TableCell>
-                    {bill.createDate
-                      ? new Date(bill.createDate).toLocaleDateString("vi-VN")
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {bill.deadline
-                      ? new Date(bill.deadline).toLocaleDateString("vi-VN")
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {(bill.total || 0).toLocaleString("vi-VN")} ₫
-                  </TableCell>
-                  <TableCell>{getStatusBadge(bill.status)}</TableCell>
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-blue-50">
+                  <TableHead className="text-blue-900">Mã hóa đơn</TableHead>
+                  <TableHead className="text-blue-900">Loại hóa đơn</TableHead>
+                  <TableHead className="text-blue-900">Ngày tạo</TableHead>
+                  <TableHead className="text-blue-900">
+                    Hạn thanh toán
+                  </TableHead>
+                  <TableHead className="text-blue-900">Số tiền</TableHead>
+                  <TableHead className="text-blue-900">Trạng thái</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {billsInOrder.map((bill) => (
+                  <TableRow key={bill.billID}>
+                    <TableCell>#{bill.billID}</TableCell>
+                    <TableCell>{toBillTypeString(bill) || "N/A"}</TableCell>
+                    <TableCell>
+                      {bill.createDate
+                        ? new Date(bill.createDate).toLocaleDateString("vi-VN")
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {bill.deadline
+                        ? new Date(bill.deadline).toLocaleDateString("vi-VN")
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {(bill.total || 0).toLocaleString("vi-VN")} ₫
+                    </TableCell>
+                    <TableCell>{getStatusBadge(bill.status)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
