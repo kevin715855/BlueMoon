@@ -211,15 +211,19 @@ class TransactionDetailUpdate(BaseModel):
     amount: int | None = None
 
 # ==================== SEPAY WEBHOOK SCHEMAS ====================
-class SePayTransactionData(BaseModel):
-    id: int
-    transaction_date: str
-    transaction_content: str
-    amount_in: str
-    reference_number: Optional[str] = None
-
 class SePayWebhookPayload(BaseModel):
-    transaction: SePayTransactionData
+    id: int                     # ID giao dịch trên SePay (Bắt buộc)
+    gateway: str                # Brand name ngân hàng (Bắt buộc)
+    transactionDate: str        # Thời gian giao dịch (Bắt buộc)
+    accountNumber: str          # Số tài khoản (Bắt buộc)
+    code: Optional[str] = None  # Mã code thanh toán (Không bắt buộc -> Có thể null)
+    content: str                # Nội dung chuyển khoản (Bắt buộc)
+    transferType: str           # Loại giao dịch: 'in' hoặc 'out' (Bắt buộc)
+    transferAmount: float       # Số tiền giao dịch (Bắt buộc - Dùng float cho an toàn)
+    accumulated: float          # Số dư lũy kế (Bắt buộc)
+    subAccount: Optional[str] = None # Tài khoản phụ (Không bắt buộc -> Có thể null)
+    referenceCode: str          # Mã tham chiếu (Bắt buộc)
+    description: str            # Nội dung tin nhắn SMS (Bắt buộc)
 
 # ==================== RECEIPT SCHEMAS ====================
 class ReceiptBillDetail(BaseModel):

@@ -37,14 +37,12 @@ def receive_sepay_webhook(
     payload: SePayWebhookPayload,
     db: Session = Depends(get_db)
 ):
-    data = payload.transaction
-
     return PaymentService.process_sepay_webhook(
         db=db,
-        content=data.transaction_content,      # Nội dung CK
-        amount_in=float(data.amount_in),       # Số tiền nhận được
-        gateway_id=str(data.id),               # ID giao dịch phía SePay
-        transaction_date=data.transaction_date # Ngày giờ giao dịch
+        content=payload.content,
+        amount_in=float(payload.transferAmount),
+        gateway_id=str(payload.id),
+        transaction_date=payload.transactionDate
     )
 
 @router.post("/check-expiry", summary="Quét và hủy giao dịch quá hạn")
