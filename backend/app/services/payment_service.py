@@ -149,17 +149,23 @@ class PaymentService:
             
             # 5b. Update các Bill con thành 'Paid'
             details = db.query(TransactionDetail).filter(TransactionDetail.transID == transaction.transID).all()
+            bill_types = []
+
             for detail in details:
                 bill = db.query(Bill).filter(Bill.billID == detail.billID).first()
                 if bill:
                     bill.status = 'Paid'
+                    if bill.typeOfBill not in bill_types:
+                        bill_types.append(bill.typeOfBill)
             
             db.commit()
             print(f"--> Giao dịch thành công: TransID {trans_id}")
 
+            content_str = ", ".join(bill_types) if bill_types else "Thanh toán hóa đơn"
+
             NotificationService.notify_payment_result(
                 db=db,
-                content=bill.typeOfBill,
+                content=content_str,
                 resident_id=transaction.residentID,
                 status="Success",
                 amount=float(amount_in),
