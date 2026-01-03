@@ -31,7 +31,7 @@ class NotificationService:
                 f"- Tổng tiền: {bill.total:,.0f} VNĐ\n"
                 f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}"
             )
-            elec_val = reading.newElectricity
+            elec_val = cons
 
         elif bill.typeOfBill == "WATER":
             title = f"Tiền Nước Tháng {month}/{year}"
@@ -43,7 +43,7 @@ class NotificationService:
                 f"- Tổng tiền: {bill.total:,.0f} VNĐ\n"
                 f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}"
             )
-            water_val = reading.newWater
+            water_val = cons
 
         elif bill.typeOfBill == "SERVICE":
             title = f"Phí Dịch Vụ Tháng {month}/{year}"
