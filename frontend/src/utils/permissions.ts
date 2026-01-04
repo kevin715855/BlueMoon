@@ -12,7 +12,7 @@ export const Permissions = {
 
   // Building Managers - Only Manager and Admin
   canManageBuildingManagers: (role: UserRole): boolean => {
-    return role === "Manager" || role === "Admin";
+    return role === "Admin";
   },
 
   // Buildings - Only Manager and Admin
@@ -22,7 +22,7 @@ export const Permissions = {
 
   // Accountants - Only Manager and Admin
   canManageAccountants: (role: UserRole): boolean => {
-    return role === "Manager" || role === "Admin";
+    return role === "Admin";
   },
 
   // Residents - Only Manager and Admin
