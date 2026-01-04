@@ -222,11 +222,30 @@ def get_receipt_pdf(
         elements.append(Spacer(1, 0.2*inch))
         
         bill_data = [['STT', 'Mã HĐ', 'Loại hóa đơn', 'Số tiền']]
+
+        
+        createDate = datetime.now()
+
+        month = createDate.month
+        year = createDate.year
+        if month==1: 
+            month = 12
+            year = year - 1
+        else:
+            month=month
+            year=year            
+            
+        bill_data = [['STT', 'Mã HĐ', 'Loại hóa đơn', 'Số tiền']]
         for idx, bill in enumerate(bills, 1):
+            content = bill.typeOfBill.replace("ELECTRICITY", f"Tiền Điện tháng {month}/{year}") \
+                                 .replace("WATER", f"Tiền Nước tháng {month}/{year}") \
+                                 .replace("SERVICE", f"Phí Dịch Vụ tháng {month}/{year}")
+            
+            print(content)
             bill_data.append([
                 str(idx),
                 f"#{getattr(bill, 'billID')}",
-                str(getattr(bill, 'typeOfBill', '')),
+                content,
                 f"{float(getattr(bill, 'amount', 0)):,.0f} VNĐ"
             ])
         
