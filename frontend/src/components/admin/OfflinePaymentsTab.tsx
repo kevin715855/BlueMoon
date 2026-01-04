@@ -29,6 +29,7 @@ import { api, type Bill, type Apartment } from "../../services/api";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
 import { subMonths } from "date-fns";
+import { Input } from "../ui/input";
 
 interface OfflinePaymentsTabProps {
   role: string;
@@ -235,24 +236,19 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
               <Label htmlFor="apartmentId" className="text-gray-700 mb-2 block">
                 Mã căn hộ
               </Label>
-              <Select
+              <Input
+                id="apartmentId"
+                type="text"
+                placeholder="Nhập mã căn hộ (VD: A101, B205)"
                 value={apartmentId}
-                onValueChange={(value) => setApartmentId(value)}
-              >
-                <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500 cursor-pointer">
-                  <SelectValue placeholder="Chọn mã căn hộ (VD: A101, B205)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {apartments.map((apartment) => (
-                    <SelectItem
-                      key={apartment.apartmentID}
-                      value={apartment.apartmentID}
-                    >
-                      {apartment.apartmentID}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setApartmentId(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearchBills();
+                  }
+                }}
+                className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
             </div>
             <div className="flex items-end">
               <Button
