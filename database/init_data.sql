@@ -269,7 +269,7 @@ INSERT INTO METER_READING (apartmentID, month, year, oldElectricity, newElectric
 ('B202', 12, 2025, 2220, 2430, 132, 145, '2025-12-31'),
 ('B203', 12, 2025, 2180, 2400, 128, 142, '2025-12-31'),
 ('B204', 12, 2025, 2250, 2465, 135, 148, '2025-12-31'),
-('B205', 12, 2025, 2210, 2420, 131, 144, '2025-12-31'),
+('B205', 12, 2025, 2210, 2420, 131, 144, '2025-12- 31'),
 ('B206', 12, 2025, 2230, 2450, 133, 147, '2025-12-31'),
 -- Tầng 3 (3 người)
 ('B301', 12, 2025, 1900, 2120, 110, 124, '2025-12-31'),
@@ -348,7 +348,7 @@ INSERT INTO METER_READING (apartmentID, month, year, oldElectricity, newElectric
 -- Tầng 3-9: Trống
 -- ============================================================
 INSERT INTO METER_READING (apartmentID, month, year, oldElectricity, newElectricity, oldWater, newWater, recordedDate) VALUES
--- Tầng 1 (3 người)
+-- Tầng 1 (3 người) 
 ('D101', 12, 2025, 2300, 2500, 140, 154, '2025-12-31'),
 ('D102', 12, 2025, 2350, 2560, 145, 159, '2025-12-31'),
 ('D103', 12, 2025, 2320, 2525, 142, 155, '2025-12-31'),
