@@ -158,9 +158,11 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
                     <TableHead className="text-blue-900">Địa chỉ</TableHead>
                     <TableHead className="text-blue-900">Số căn hộ</TableHead>
                     <TableHead className="text-blue-900">Quản lý</TableHead>
-                    <TableHead className="text-blue-900 text-center">
-                      Thao tác
-                    </TableHead>
+                    {role === "Admin" && (
+                      <TableHead className="text-blue-900 text-center">
+                        Thao tác
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -177,17 +179,19 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
                       <TableCell>
                         {getManagerName(building.managerID)}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditClick(building)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Chỉnh sửa
-                        </Button>
-                      </TableCell>
+                      {role === "Admin" && (
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(building)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Chỉnh sửa
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

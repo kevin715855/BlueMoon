@@ -34,14 +34,6 @@ export interface AccountResponse {
   isActive: boolean;
 }
 
-export interface AccountRoleUpdate {
-  role: "Resident" | "Accountant" | "Manager" | "Admin";
-}
-
-export interface AccountPasswordUpdate {
-  newPassword: string;
-}
-
 // Apartment Types
 export interface Apartment {
   apartmentID: string;
@@ -134,19 +126,19 @@ export interface Building {
 // Accountant Types
 export interface Accountant {
   accountantID: number;
-  name: string;
+  fullname: string;
   phoneNumber?: string;
   username?: string;
 }
 
 export interface AccountantCreate {
-  name: string;
+  fullname: string;
   phoneNumber?: string;
   username?: string;
 }
 
 export interface AccountantUpdate {
-  name?: string;
+  fullname?: string;
   phoneNumber?: string;
   username?: string;
 }
@@ -230,10 +222,13 @@ export interface MeterReadingCreate {
 
 export interface ServiceFeeCreate {
   buildingID: string;
-  typeOfBill: string;
-  feePerUnit?: number | null;
-  flatFee?: number | null;
-  effectiveDate: string;
+  serviceName: string;
+  unitPrice?: number | null;
+}
+
+export interface ServiceFeeDelete {
+  buildingID: string;
+  serviceName: string;
 }
 
 export interface CalculateBillsRequest {
@@ -347,7 +342,7 @@ export const api = {
     },
 
     get: async (username: string): Promise<AccountResponse> => {
-      return fetchApi<AccountResponse>(`/accounts/managers/${username}`, {
+      return fetchApi<AccountResponse>(`/accounts/${username}`, {
         method: "GET",
       });
     },
@@ -358,27 +353,14 @@ export const api = {
       });
     },
 
-    updateRole: async (
-      username: string,
-      roleData: AccountRoleUpdate,
-    ): Promise<AccountResponse> => {
-      return fetchApi<AccountResponse>(`/accounts/managers/${username}/role`, {
-        method: "PATCH",
-        body: JSON.stringify(roleData),
-      });
-    },
-
     updatePassword: async (
       username: string,
-      passwordData: AccountPasswordUpdate,
+      password: string,
     ): Promise<AccountResponse> => {
-      return fetchApi<AccountResponse>(
-        `/accounts/managers/${username}/password`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(passwordData),
-        },
-      );
+      return fetchApi<AccountResponse>(`/accounts/${username}/password`, {
+        method: "PATCH",
+        body: JSON.stringify({ role: "", password, isActive: true }),
+      });
     },
   },
 
@@ -565,12 +547,6 @@ export const api = {
       });
     },
 
-    checkExpiry: async (): Promise<any> => {
-      return fetchApi<any>("/online-payments/check-expiry", {
-        method: "POST",
-      });
-    },
-
     // Get payment history for current user
     getMyHistory: async (): Promise<PaymentTransaction[]> => {
       return fetchApi<PaymentTransaction[]>("/payments/my-history", {
@@ -581,11 +557,17 @@ export const api = {
 
   // ==================== OFFLINE PAYMENTS ====================
   offlinePayments: {
-    createTransaction: async (billIds: number[]): Promise<QRCodeResponse> => {
-      return fetchApi<QRCodeResponse>("/offline-payments/create-transaction", {
-        method: "POST",
-        body: JSON.stringify({ bill_ids: billIds }),
-      });
+    createTransaction: async (
+      apartmentId: string,
+      billIds: number[],
+    ): Promise<QRCodeResponse> => {
+      return fetchApi<QRCodeResponse>(
+        `/offline-payments/create-transaction?apartment_id=${apartmentId}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ bill_ids: billIds }),
+        },
+      );
     },
 
     verifyTransaction: async (
@@ -671,6 +653,19 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       });
+    },
+
+    deleteServiceFee: async ({
+      serviceName,
+      buildingID,
+    }: ServiceFeeDelete): Promise<void> => {
+      return fetchApi<void>(
+        `/accounting/delete-service-fee?service_name=${serviceName}&building_id=${buildingID}`,
+        {
+          method: "DELETE",
+          body: JSON.stringify({}),
+        },
+      );
     },
 
     // Calculate monthly bills

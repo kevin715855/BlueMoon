@@ -88,7 +88,7 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
 
     setPasswordChangeLoading(true);
     try {
-      await api.accounts.updatePassword(currentUsername, { newPassword });
+      await api.accounts.updatePassword(currentUsername, newPassword);
       toast.success("Đổi mật khẩu thành công!");
       // Reset form
       setNewPassword("");
@@ -383,7 +383,7 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
               <ul className="space-y-1 text-xs text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>
-                  <span>Sử dụng ít nhất 8 ký tự</span>
+                  <span>Sử dụng ít nhất 6 ký tự</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-600 mt-0.5">•</span>

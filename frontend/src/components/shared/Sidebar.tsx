@@ -1,4 +1,17 @@
-import { Home, FileText, CreditCard, Building, Users, UserCog, ClipboardList, LogOut, Receipt, Building2, Calculator, Bell } from "lucide-react";
+import {
+  Home,
+  FileText,
+  CreditCard,
+  Building,
+  Users,
+  UserCog,
+  ClipboardList,
+  LogOut,
+  Receipt,
+  Building2,
+  Calculator,
+  Bell,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Permissions, type UserRole } from "../../utils/permissions";
 
@@ -9,7 +22,12 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps) {
+export function Sidebar({
+  role,
+  activeTab,
+  onTabChange,
+  onLogout,
+}: SidebarProps) {
   const userRole = role as UserRole;
 
   const getMenuItems = () => {
@@ -21,6 +39,10 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     items.push({ id: "accounts", label: "Tài khoản", icon: UserCog });
 
     if (Permissions.canViewNotifications(userRole)) {
+      items.push({ id: "notifications", label: "Thông báo", icon: Bell });
+    }
+
+    if (Permissions.canBroadcastNotifications(userRole)) {
       items.push({ id: "notifications", label: "Thông báo", icon: Bell });
     }
 
@@ -45,7 +67,11 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     }
 
     if (Permissions.canManageOfflinePayments(userRole)) {
-      items.push({ id: "offline-payments", label: "Thanh toán trực tiếp", icon: CreditCard });
+      items.push({
+        id: "offline-payments",
+        label: "Thanh toán trực tiếp",
+        icon: CreditCard,
+      });
     }
 
     if (Permissions.canManageBuildings(userRole)) {
@@ -53,7 +79,11 @@ export function Sidebar({ role, activeTab, onTabChange, onLogout }: SidebarProps
     }
 
     if (Permissions.canManageBuildingManagers(userRole)) {
-      items.push({ id: "building-managers", label: "Quản lý", icon: ClipboardList });
+      items.push({
+        id: "building-managers",
+        label: "Quản lý",
+        icon: ClipboardList,
+      });
     }
 
     if (Permissions.canManageAccountants(userRole)) {

@@ -28,14 +28,13 @@ import { Badge } from "../ui/badge";
 import { api, type Bill, type Apartment } from "../../services/api";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
+import { subMonths } from "date-fns";
 
 interface OfflinePaymentsTabProps {
   role: string;
 }
 
 export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
-  const canAccess = Permissions.canManageOfflinePayments(role as UserRole);
-
   // Search state
   const [apartmentId, setApartmentId] = useState("");
   const [searching, setSearching] = useState(false);
@@ -51,9 +50,26 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
     null,
   );
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [transCode, setTransCode] = useState<string | null>(null);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [processingPayment, setProcessingPayment] = useState(false);
 
   const [apartments, setApartments] = useState<Apartment[]>([]);
+
+  const fetchApartments = async () => {
+    try {
+      const apartments = await api.apartments.getAll();
+      setApartments(apartments);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể tải danh sách căn hộ");
+    }
+  };
+
+  useEffect(() => {
+    fetchApartments();
+  }, []);
+
+  const canAccess = Permissions.canManageOfflinePayments(role as UserRole);
 
   if (!canAccess) {
     return (
@@ -69,18 +85,23 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
     );
   }
 
-  useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        const apartments = await api.apartments.getAll();
-        setApartments(apartments);
-      } catch (error: any) {
-        toast.error(error.message || "Không thể tải danh sách căn hộ");
-      }
-    };
+  const toBillTypeString = (bill: Bill) => {
+    const deadline = new Date(bill.deadline!);
 
-    fetchApartments();
-  }, []);
+    const lastMonth = subMonths(deadline, 1);
+    const month = lastMonth.getMonth() + 1;
+    const year = lastMonth.getFullYear();
+
+    if (bill.typeOfBill === "SERVICE") {
+      return `Phí Dịch Vụ Tháng ${month}/${year}`;
+    } else if (bill.typeOfBill === "WATER") {
+      return `Tiền Nước Tháng ${month}/${year}`;
+    } else if (bill.typeOfBill === "ELECTRICITY") {
+      return `Tiền Điện Tháng ${month}/${year}`;
+    } else {
+      return bill.typeOfBill;
+    }
+  };
 
   const handleSearchBills = async () => {
     if (!apartmentId.trim()) {
@@ -135,38 +156,38 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
   const handlePaymentMethodSelect = async (method: "qr" | "direct") => {
     setPaymentMethod(method);
 
-    if (method === "qr") {
-      // Generate QR code
-      setProcessingPayment(true);
-      try {
-        const response = await api.payments.createQR(selectedBills);
+    setProcessingPayment(true);
+    try {
+      const response = await api.offlinePayments.createTransaction(
+        apartmentId,
+        selectedBills,
+      );
+
+      if (method === "qr") {
         setQrCodeUrl(response.qr_url);
-        toast.success("Đã tạo mã QR thanh toán");
-      } catch (error: any) {
-        toast.error(error.message || "Không thể tạo mã QR");
-        setPaymentMethod(null);
-      } finally {
-        setProcessingPayment(false);
+      } else if (method === "direct") {
+        setTransCode(response.trans_code);
+        setTotalAmount(response.total_amount);
       }
-    } else if (method === "direct") {
-      // Process direct offline payment
-      handleDirectPayment();
+
+      toast.success("Đã tạo giao dịch thành công");
+    } catch (error: any) {
+      toast.error(error.message || "Không thể tạo mã QR");
+      setPaymentMethod(null);
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
-  const handleDirectPayment = async () => {
+  const handleVerifyPayment = async () => {
     setProcessingPayment(true);
     try {
-      const { transaction_id, trans_code, total_amount } =
-        await api.offlinePayments.createTransaction(selectedBills);
       const verifyMessage = await api.offlinePayments.verifyTransaction(
-        trans_code,
-        total_amount,
+        transCode!,
+        totalAmount,
       );
       if (verifyMessage.success) {
-        toast.success(
-          `Thanh toán thành công! Mã giao dịch: #${transaction_id}`,
-        );
+        toast.success("Thanh toán thành công!");
       }
 
       // Reset and refresh
@@ -175,7 +196,8 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
       setPaymentMethod(null);
       handleSearchBills(); // Refresh the bill list
     } catch (error: any) {
-      toast.error(error.message || "Không thể xử lý thanh toán");
+      toast.error(error.message || "Vui lòng thử lại");
+      setPaymentMethod(null);
     } finally {
       setProcessingPayment(false);
     }
@@ -303,7 +325,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                         />
                         <div>
                           <p className="font-medium text-gray-900">
-                            #{bill.billID} - {bill.typeOfBill}
+                            #{bill.billID} - {toBillTypeString(bill)}
                           </p>
                           <p className="text-sm text-gray-500">
                             Hạn thanh toán:{" "}
@@ -422,10 +444,23 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                     setShowPaymentModal(false);
                     setPaymentMethod(null);
                     setQrCodeUrl(null);
+                    handleSearchBills(); // Refresh the bill list
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer"
                 >
                   Đóng
+                </Button>
+              </div>
+            ) : paymentMethod === "direct" ? (
+              <div className="flex flex-col items-center space-y-4">
+                <p className="text-gray-600 text-center">
+                  Xác nhận cư dân thanh toán bằng tiền mặt
+                </p>
+                <Button
+                  onClick={() => handleVerifyPayment()}
+                  className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                >
+                  Xác nhận
                 </Button>
               </div>
             ) : processingPayment ? (

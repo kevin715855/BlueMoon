@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Sidebar } from "../shared/Sidebar";
 import { AdminOverviewTab } from "./AdminOverviewTab";
 import { AccountManagementTab } from "./AccountManagementTab";
+import { NotificationTab } from "./NotificationTab";
 import { ResidentManagementTab } from "./ResidentManagementTab";
 import { ApartmentManagementTab } from "./ApartmentManagementTab";
 import { BuildingManagersTab } from "./BuildingManagersTab";
@@ -65,6 +66,7 @@ export function AdminDashboard({
               <AdminOverviewTab role={role} />
             ))}
           {activeTab === "accounts" && <AccountManagementTab role={role} />}
+          {activeTab === "notifications" && <NotificationTab role={role} />}
           {activeTab === "residents" && <ResidentManagementTab role={role} />}
           {activeTab === "apartments" && <ApartmentManagementTab role={role} />}
           {activeTab === "buildings" && <BuildingManagementTab role={role} />}

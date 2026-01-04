@@ -55,13 +55,13 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
 
   // Form states
   const [createForm, setCreateForm] = useState<AccountantCreate>({
-    name: "",
+    fullname: "",
     phoneNumber: "",
     username: "",
   });
 
   const [editForm, setEditForm] = useState<AccountantUpdate>({
-    name: "",
+    fullname: "",
     phoneNumber: "",
     username: "",
   });
@@ -93,7 +93,7 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
       toast.success("Thêm kế toán thành công");
       setCreateDialogOpen(false);
       setCreateForm({
-        name: "",
+        fullname: "",
         phoneNumber: "",
         username: "",
       });
@@ -133,7 +133,7 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
   const openEditDialog = (accountant: Accountant) => {
     setSelectedAccountant(accountant);
     setEditForm({
-      name: accountant.name,
+      fullname: accountant.fullname,
       phoneNumber: accountant.phoneNumber,
       username: accountant.username,
     });
@@ -184,12 +184,12 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="create-name">Họ tên *</Label>
+                  <Label htmlFor="create-fullname">Họ tên *</Label>
                   <Input
-                    id="create-name"
-                    value={createForm.name}
+                    id="create-fullname"
+                    value={createForm.fullname}
                     onChange={(e) =>
-                      setCreateForm({ ...createForm, name: e.target.value })
+                      setCreateForm({ ...createForm, fullname: e.target.value })
                     }
                     required
                   />
@@ -264,7 +264,7 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
                     <TableRow key={accountant.accountantID}>
                       <TableCell>{accountant.accountantID}</TableCell>
                       <TableCell>
-                        {accountant.name ||
+                        {accountant.fullname ||
                           `Kế toán ${accountant.accountantID}`}
                       </TableCell>
                       <TableCell>{accountant.phoneNumber || "N/A"}</TableCell>
@@ -304,17 +304,17 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
           <DialogHeader>
             <DialogTitle>Chỉnh sửa kế toán</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin kế toán {selectedAccountant?.name}
+              Cập nhật thông tin kế toán {selectedAccountant?.fullname}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Họ tên *</Label>
+              <Label htmlFor="edit-fullname">Họ tên *</Label>
               <Input
-                id="edit-name"
-                value={editForm.name}
+                id="edit-fullname"
+                value={editForm.fullname}
                 onChange={(e) =>
-                  setEditForm({ ...editForm, name: e.target.value })
+                  setEditForm({ ...editForm, fullname: e.target.value })
                 }
               />
             </div>
@@ -364,7 +364,7 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa kế toán</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa kế toán "{selectedAccountant?.name}"
+              Bạn có chắc chắn muốn xóa kế toán "{selectedAccountant?.fullname}"
               không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>

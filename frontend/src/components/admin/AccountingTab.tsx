@@ -19,6 +19,7 @@ import {
   Plus,
   Upload,
   Receipt,
+  Minus,
 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
@@ -32,6 +33,7 @@ import {
   api,
   type MeterReadingCreate,
   type ServiceFeeCreate,
+  type ServiceFeeDelete,
   type CalculateBillsRequest,
   type Apartment,
   type BillCreate,
@@ -68,13 +70,20 @@ export function AccountingTab({ role }: AccountingTabProps) {
   const [showServiceFeeModal, setShowServiceFeeModal] = useState(false);
   const [serviceFee, setServiceFee] = useState<ServiceFeeCreate>({
     buildingID: "",
-    typeOfBill: "Electricity",
-    feePerUnit: null,
-    flatFee: null,
-    effectiveDate: new Date().toISOString().split("T")[0],
+    serviceName: "Electricity",
+    unitPrice: null,
   });
   const [otherBillType, setOtherBillType] = useState("");
   const [processingServiceFee, setProcessingServiceFee] = useState(false);
+
+  // Delete Fee state
+  const [showDeleteFeeModal, setShowDeleteFeeModal] = useState(false);
+  const [deleteFee, setDeleteFee] = useState<ServiceFeeDelete>({
+    buildingID: "",
+    serviceName: "",
+  });
+  const [otherBillTypeDelete, setOtherBillTypeDelete] = useState("");
+  const [deletingServiceFee, setDeletingServiceFee] = useState(false);
 
   // Calculate Bills state
   const [showCalculateModal, setShowCalculateModal] = useState(false);
@@ -82,7 +91,7 @@ export function AccountingTab({ role }: AccountingTabProps) {
     useState<CalculateBillsRequest>({
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
-      deadline_day: 15,
+      deadline_day: 10,
       overwrite: false,
     });
   const [processingCalculation, setProcessingCalculation] = useState(false);
@@ -98,16 +107,16 @@ export function AccountingTab({ role }: AccountingTabProps) {
   });
   const [processingManualBill, setProcessingManualBill] = useState(false);
 
-  useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        const apartments = await api.apartments.getAll();
-        setApartments(apartments);
-      } catch (error: any) {
-        toast.error(error.message || "Không thể tải danh sách căn hộ");
-      }
-    };
+  const fetchApartments = async () => {
+    try {
+      const apartments = await api.apartments.getAll();
+      setApartments(apartments);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể tải danh sách căn hộ");
+    }
+  };
 
+  useEffect(() => {
     fetchApartments();
   }, []);
 
@@ -240,12 +249,12 @@ export function AccountingTab({ role }: AccountingTabProps) {
 
   // ==================== Service Fee Handlers ====================
   const handleServiceFeeSubmit = async () => {
-    if (!serviceFee.buildingID || !serviceFee.typeOfBill) {
+    if (!serviceFee.buildingID || !serviceFee.serviceName) {
       toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
-    if (serviceFee.feePerUnit === null && serviceFee.flatFee === null) {
+    if (serviceFee.unitPrice === null) {
       toast.error("Vui lòng nhập phí theo đơn vị hoặc phí cố định");
       return;
     }
@@ -258,16 +267,39 @@ export function AccountingTab({ role }: AccountingTabProps) {
       // Reset form
       setServiceFee({
         buildingID: "",
-        typeOfBill: "Electricity",
-        feePerUnit: null,
-        flatFee: null,
-        effectiveDate: new Date().toISOString().split("T")[0],
+        serviceName: "Electricity",
+        unitPrice: null,
       });
       setShowServiceFeeModal(false);
     } catch (error: any) {
       toast.error(error.message || "Không thể thiết lập phí dịch vụ");
     } finally {
       setProcessingServiceFee(false);
+    }
+  };
+
+  // ==================== Delete Fee Handlers =====================
+  const handleServiceFeeDelete = async () => {
+    if (!deleteFee.buildingID || !deleteFee.serviceName) {
+      toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
+    setDeletingServiceFee(true);
+    try {
+      await api.accounting.deleteServiceFee(deleteFee);
+      toast.success("Đã xóa phí dịch vụ thành công");
+
+      // Reset form
+      setDeleteFee({
+        buildingID: "",
+        serviceName: "",
+      });
+      setShowDeleteFeeModal(false);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể xóa phí dịch vụ");
+    } finally {
+      setDeletingServiceFee(false);
     }
   };
 
@@ -328,8 +360,30 @@ export function AccountingTab({ role }: AccountingTabProps) {
         </p>
       </div>
 
+      {/* CSV Format Info Card */}
+      <Card className="shadow-lg border-gray-200">
+        <CardHeader>
+          <CardTitle className="text-gray-900">Định dạng file CSV</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-3">
+            File CSV phải có định dạng như sau (bao gồm dòng header):
+          </p>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <code className="text-sm text-gray-800">
+              apartmentID,month,year,oldElectricity,newElectricity,oldWater,newWater
+              <br />
+              A101,12,2023,1000,1200,500,600
+              <br />
+              A102,12,2023,1500,1700,800,900
+            </code>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Main Action Cards */}
-      <div className="grid grid-cols-2 gap-6">
+      {/*<div className="grid grid-cols-5 gap-6">*/}
+      <div className="grid grid-cols-1 gap-6">
         {/* Meter Reading Card */}
         <Card className="shadow-lg border-blue-200 hover:shadow-xl transition-shadow">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
@@ -366,7 +420,7 @@ export function AccountingTab({ role }: AccountingTabProps) {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-6 min-h-[48px]">
-              Thiết lập phí dịch vụ cho điện, nước, và các loại dịch vụ khác
+              Thiết lập phí dịch vụ cho các loại dịch vụ khác
             </p>
             <Button
               onClick={() => setShowServiceFeeModal(true)}
@@ -374,6 +428,30 @@ export function AccountingTab({ role }: AccountingTabProps) {
             >
               <Plus className="w-5 h-5 mr-2" />
               Thêm phí dịch vụ
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Delete Fee Card */}
+        <Card>
+          <CardHeader className="bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="bg-white rounded-full p-3">
+                <DollarSign className="w-6 h-6 text-yellow-600" />
+              </div>
+              <CardTitle className="text-white">Xóa phí</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-6 min-h-[48px]">
+              Xóa các loại phí dịch vụ khác
+            </p>
+            <Button
+              onClick={() => setShowDeleteFeeModal(true)}
+              className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-800 hover:to-orange-700 cursor-pointer"
+            >
+              <Minus className="w-5 h-5 mr-2" />
+              Xóa phí dịch vụ
             </Button>
           </CardContent>
         </Card>
@@ -426,27 +504,6 @@ export function AccountingTab({ role }: AccountingTabProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* CSV Format Info Card */}
-      <Card className="shadow-lg border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-gray-900">Định dạng file CSV</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600 mb-3">
-            File CSV phải có định dạng như sau (bao gồm dòng header):
-          </p>
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <code className="text-sm text-gray-800">
-              apartmentID,month,year,oldElectricity,newElectricity,oldWater,newWater
-              <br />
-              A101,12,2023,1000,1200,500,600
-              <br />
-              A102,12,2023,1500,1700,800,900
-            </code>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Meter Reading Modal */}
       <Dialog
@@ -513,7 +570,7 @@ export function AccountingTab({ role }: AccountingTabProps) {
                       type="file"
                       accept=".csv"
                       onChange={handleCSVFileChange}
-                      className="flex-1"
+                      className="flex-1 cursor-pointer"
                     />
                     {csvFile && (
                       <Badge className="bg-green-500">{csvFile.name}</Badge>
@@ -779,42 +836,19 @@ export function AccountingTab({ role }: AccountingTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="typeOfBill" className="text-gray-700 mb-2 block">
+              <Label htmlFor="serviceName" className="text-gray-700 mb-2 block">
                 Loại phí *
               </Label>
               <Select
-                value={serviceFee.typeOfBill}
+                value={serviceFee.serviceName}
                 onValueChange={(value) => {
-                  setServiceFee({ ...serviceFee, typeOfBill: value });
-                  // Reset fee fields when changing type
-                  if (value === "Electricity" || value === "Water") {
-                    setServiceFee((prev) => ({
-                      ...prev,
-                      typeOfBill: value,
-                      flatFee: null,
-                    }));
-                  } else if (
-                    value === "Management" ||
-                    value === "Parking" ||
-                    value === "Internet"
-                  ) {
-                    setServiceFee((prev) => ({
-                      ...prev,
-                      typeOfBill: value,
-                      feePerUnit: null,
-                    }));
-                  }
-                  // For "Other", keep both options available
+                  setServiceFee({ ...serviceFee, serviceName: value });
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="cursor-pointer">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Electricity">
-                    Điện (Electricity)
-                  </SelectItem>
-                  <SelectItem value="Water">Nước (Water)</SelectItem>
                   <SelectItem value="Management">
                     Quản lý (Management)
                   </SelectItem>
@@ -826,7 +860,7 @@ export function AccountingTab({ role }: AccountingTabProps) {
             </div>
 
             {/* Show custom bill type input when "Other" is selected */}
-            {serviceFee.typeOfBill === "Other" && (
+            {serviceFee.serviceName === "Other" && (
               <div>
                 <Label
                   htmlFor="otherBillType"
@@ -847,136 +881,27 @@ export function AccountingTab({ role }: AccountingTabProps) {
               </div>
             )}
 
-            {/* Dynamic fee input based on typeOfBill */}
-            {(serviceFee.typeOfBill === "Electricity" ||
-              serviceFee.typeOfBill === "Water") && (
-              <div>
-                <Label
-                  htmlFor="feePerUnit"
-                  className="text-gray-700 mb-2 block"
-                >
-                  Phí theo đơn vị (₫) *
-                </Label>
-                <Input
-                  id="feePerUnit"
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="VD: 3500"
-                  value={serviceFee.feePerUnit || 0}
-                  onChange={(e) =>
-                    setServiceFee({
-                      ...serviceFee,
-                      feePerUnit: e.target.value ? parseInt(e.target.value) : 0,
-                    })
-                  }
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {serviceFee.typeOfBill === "Electricity"
-                    ? "Đơn giá điện (₫/kWh)"
-                    : "Đơn giá nước (₫/m³)"}
-                </p>
-              </div>
-            )}
-
-            {(serviceFee.typeOfBill === "Management" ||
-              serviceFee.typeOfBill === "Parking" ||
-              serviceFee.typeOfBill === "Internet") && (
-              <div>
-                <Label htmlFor="flatFee" className="text-gray-700 mb-2 block">
-                  Phí cố định (₫) *
-                </Label>
-                <Input
-                  id="flatFee"
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="VD: 100000"
-                  value={serviceFee.flatFee || 0}
-                  onChange={(e) =>
-                    setServiceFee({
-                      ...serviceFee,
-                      flatFee: e.target.value ? parseInt(e.target.value) : 0,
-                    })
-                  }
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Phí cố định hàng tháng cho mỗi căn hộ
-                </p>
-              </div>
-            )}
-
-            {serviceFee.typeOfBill === "Other" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label
-                    htmlFor="feePerUnit"
-                    className="text-gray-700 mb-2 block"
-                  >
-                    Phí theo đơn vị (₫)
-                  </Label>
-                  <Input
-                    id="feePerUnit"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="VD: 3500"
-                    value={serviceFee.feePerUnit || 0}
-                    onChange={(e) =>
-                      setServiceFee({
-                        ...serviceFee,
-                        feePerUnit: e.target.value
-                          ? parseInt(e.target.value)
-                          : 0,
-                      })
-                    }
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Nếu phí tính theo đơn vị
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="flatFee" className="text-gray-700 mb-2 block">
-                    Phí cố định (₫)
-                  </Label>
-                  <Input
-                    id="flatFee"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="VD: 100000"
-                    value={serviceFee.flatFee || ""}
-                    onChange={(e) =>
-                      setServiceFee({
-                        ...serviceFee,
-                        flatFee: e.target.value ? parseInt(e.target.value) : 0,
-                      })
-                    }
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Nếu phí cố định</p>
-                </div>
-              </div>
-            )}
-
             <div>
-              <Label
-                htmlFor="effectiveDate"
-                className="text-gray-700 mb-2 block"
-              >
-                Ngày hiệu lực *
+              <Label htmlFor="flatFee" className="text-gray-700 mb-2 block">
+                Đơn giá (₫) *
               </Label>
               <Input
-                id="effectiveDate"
-                type="date"
-                value={serviceFee.effectiveDate}
+                id="flatFee"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="VD: 100000"
+                value={serviceFee.unitPrice || 0}
                 onChange={(e) =>
                   setServiceFee({
                     ...serviceFee,
-                    effectiveDate: e.target.value,
+                    unitPrice: e.target.value ? parseInt(e.target.value) : 0,
                   })
                 }
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Phí cố định hàng tháng cho mỗi căn hộ
+              </p>
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -999,6 +924,107 @@ export function AccountingTab({ role }: AccountingTabProps) {
                   </>
                 ) : (
                   "Lưu phí dịch vụ"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Fee Modal */}
+      <Dialog open={showDeleteFeeModal} onOpenChange={setShowDeleteFeeModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center text-red-900 text-2xl">
+              Xóa phí dịch vụ
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-500">
+              Nhập thông tin phí dịch vụ
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-6 space-y-4">
+            <div>
+              <Label htmlFor="buildingID" className="text-gray-700 mb-2 block">
+                Mã tòa nhà *
+              </Label>
+              <Input
+                id="buildingID"
+                type="text"
+                placeholder="VD: A, B, C"
+                value={deleteFee.buildingID}
+                onChange={(e) =>
+                  setDeleteFee({ ...deleteFee, buildingID: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="serviceName" className="text-gray-700 mb-2 block">
+                Loại phí *
+              </Label>
+              <Select
+                value={deleteFee.serviceName}
+                onValueChange={(value) => {
+                  setDeleteFee({ ...deleteFee, serviceName: value });
+                }}
+              >
+                <SelectTrigger className="cursor-pointer">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Management">
+                    Quản lý (Management)
+                  </SelectItem>
+                  <SelectItem value="Parking">Gửi xe (Parking)</SelectItem>
+                  <SelectItem value="Internet">Internet</SelectItem>
+                  <SelectItem value="Other">Khác (Other)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Show custom bill type input when "Other" is selected */}
+            {serviceFee.serviceName === "Other" && (
+              <div>
+                <Label
+                  htmlFor="otherBillTypeDelete"
+                  className="text-gray-700 mb-2 block"
+                >
+                  Tên loại phí *
+                </Label>
+                <Input
+                  id="otherBillTypeDelete"
+                  type="text"
+                  placeholder="VD: Phí bảo trì thang máy, Phí vệ sinh..."
+                  value={otherBillTypeDelete}
+                  onChange={(e) => setOtherBillTypeDelete(e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Nhập tên cụ thể cho loại phí này
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={() => setShowDeleteFeeModal(false)}
+                variant="outline"
+                className="flex-1 cursor-pointer"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleServiceFeeDelete}
+                disabled={deletingServiceFee}
+                className="flex-1 bg-yellow-600 hover:bg-yellow-800 cursor-pointer"
+              >
+                {deletingServiceFee ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Đang xóa...
+                  </>
+                ) : (
+                  "Xóa phí dịch vụ"
                 )}
               </Button>
             </div>
@@ -1198,7 +1224,7 @@ export function AccountingTab({ role }: AccountingTabProps) {
                 id="deadline-day"
                 type="number"
                 min="1"
-                max="31"
+                max="20"
                 value={calculateRequest.deadline_day || ""}
                 onChange={(e) =>
                   setCalculateRequest({
@@ -1208,7 +1234,7 @@ export function AccountingTab({ role }: AccountingTabProps) {
                       : undefined,
                   })
                 }
-                placeholder="VD: 15 (ngày 15 hàng tháng)"
+                placeholder="VD: 10 (ngày 10 hàng tháng)"
               />
             </div>
 
