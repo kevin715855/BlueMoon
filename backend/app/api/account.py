@@ -162,11 +162,10 @@ def update_manager_role(
 
 
 @router.patch("/managers/{username}/password", response_model=AccountRead, summary="Đổi mật khẩu")
-def change_manager_password(
+def change_password(
     username: str,
     password_update: AccountUpdate,
     db: Session = Depends(get_db),
-    current_manager: TokenData = Depends(get_current_manager)
 ):
     """
     **Đổi mật khẩu cho tài khoản quản lý**
