@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from decimal import Decimal, ROUND_HALF_UP
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.app.models.service_fee import ServiceFee
@@ -223,3 +224,25 @@ class AccountingService:
             Bill.apartmentID, func.sum(Bill.total).label("total_unpaid"), func.count(Bill.billID).label("bill_count")
         ).filter(Bill.status == "Unpaid").group_by(Bill.apartmentID).all()
         return [{"apartmentID": r.apartmentID, "total_unpaid": float(r.total_unpaid), "bill_count": r.bill_count} for r in results]
+    
+    @staticmethod
+    def delete_service_fee(db: Session, service_name: str, building_id: str):
+        """Xóa đơn giá phí dịch vụ"""
+        existing_fee = db.query(ServiceFee).filter(
+            ServiceFee.serviceName == service_name,
+            ServiceFee.buildingID == building_id
+        ).first()
+
+        if not existing_fee:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Không tìm thấy dịch vụ '{service_name}' tại tòa nhà {building_id}"
+            )
+
+        try:
+            db.delete(existing_fee)
+            db.commit()
+            return f"Đã xóa dịch vụ {service_name} thành công."
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Lỗi khi xóa: {str(e)}")

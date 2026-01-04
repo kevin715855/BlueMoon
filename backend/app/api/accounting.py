@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -86,3 +86,17 @@ def create_manual_bill(
 @router.get("/bills", response_model=List[BillRead], summary="5. Xem danh sách hóa đơn")
 def get_bills(apartment_id: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
     return AccountingService.get_all_bills(db, apartment_id, status)
+
+@router.delete("/delete-service-fee", status_code=status.HTTP_204_NO_CONTENT, summary="Xóa dịch vụ")
+def del_service_fee(
+    service_name: str = Query(..., description="Tên dịch vụ cần xóa (VD: ELECTRICITY)"),
+    building_id: str = Query(..., description="ID tòa nhà"),
+    db: Session = Depends(get_db),
+    accountant = Depends(get_current_accountant)
+):
+    """
+    API xóa cấu hình phí dịch vụ.
+    Cách gọi: DELETE /api/accounting/service-fees?service_name=ELECTRICITY&building_id=1
+    """
+    msg = AccountingService.delete_service_fee(db, service_name, building_id)
+    return {"success": True, "message": msg}
