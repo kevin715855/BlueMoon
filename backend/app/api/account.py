@@ -140,7 +140,7 @@ def change_password(
             detail=f"Tài khoản '{username}' không tồn tại"
         )
     
-    if verify_password(password_update, account.password):
+    if verify_password(password_update.password, account.password):
         raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Mật khẩu mới phải khác với mật khẩu hiện tại"
