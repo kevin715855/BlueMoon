@@ -45,7 +45,7 @@ class PaymentService:
             new_trans = PaymentTransaction(
                 residentID=user_id,
                 amount=total_amount,
-                paymentMethod="Online_Payment",
+                paymentMethod="Online Payment",
                 status="Pending",
                 createdDate=datetime.now()
             )
