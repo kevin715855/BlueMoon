@@ -2,8 +2,22 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { ShieldAlert, Building as BuildingIcon, Edit } from "lucide-react";
 import { api, type Building, type BuildingManager } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
@@ -19,7 +33,9 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
   const [managers, setManagers] = useState<BuildingManager[]>([]);
   const [loading, setLoading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(
+    null,
+  );
   const [newManagerId, setNewManagerId] = useState<string>("");
 
   const canAccess = Permissions.canManageBuildings(role as UserRole);
@@ -41,7 +57,9 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
       const allBuildings: Building[] = [];
       for (const manager of managersData) {
         try {
-          const managerBuildings = await api.buildings.getByManager(manager.managerID);
+          const managerBuildings = await api.buildings.getByManager(
+            manager.managerID,
+          );
           allBuildings.push(...managerBuildings);
         } catch (error) {
           // Manager might not have any buildings
@@ -68,16 +86,20 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
 
     const managerId = newManagerId === "" ? null : parseInt(newManagerId);
 
-    if (newManagerId !== "" && (isNaN(managerId as number) || (managerId as number) < 0)) {
+    if (
+      newManagerId !== "" &&
+      (isNaN(managerId as number) || (managerId as number) < 0)
+    ) {
       toast.error("Mã quản lý không hợp lệ");
       return;
     }
 
     setLoading(true);
     try {
-      await api.buildings.updateManager(selectedBuilding.buildingID, {
-        managerID: managerId as number,
-      });
+      await api.buildings.updateManager(
+        selectedBuilding.buildingID,
+        managerId!,
+      );
 
       toast.success("Cập nhật quản lý thành công");
       setEditDialogOpen(false);
@@ -92,7 +114,7 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
   const getManagerName = (managerId: number | null | undefined): string => {
     if (!managerId) return "Chưa có quản lý";
     const manager = managers.find((m) => m.managerID === managerId);
-    return manager?.fullName || `Manager #${managerId}`;
+    return manager?.name || `Manager #${managerId}`;
   };
 
   if (!canAccess) {
@@ -136,27 +158,40 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
                     <TableHead className="text-blue-900">Địa chỉ</TableHead>
                     <TableHead className="text-blue-900">Số căn hộ</TableHead>
                     <TableHead className="text-blue-900">Quản lý</TableHead>
-                    <TableHead className="text-blue-900 text-center">Thao tác</TableHead>
+                    {role === "Admin" && (
+                      <TableHead className="text-blue-900 text-center">
+                        Thao tác
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {buildings.map((building) => (
-                    <TableRow key={building.buildingID} className="hover:bg-blue-50/50">
-                      <TableCell className="font-medium">{building.buildingID}</TableCell>
+                    <TableRow
+                      key={building.buildingID}
+                      className="hover:bg-blue-50/50"
+                    >
+                      <TableCell className="font-medium">
+                        {building.buildingID}
+                      </TableCell>
                       <TableCell>{building.address || "N/A"}</TableCell>
                       <TableCell>{building.numApartment || 0}</TableCell>
-                      <TableCell>{getManagerName(building.managerID)}</TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditClick(building)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Chỉnh sửa
-                        </Button>
+                      <TableCell>
+                        {getManagerName(building.managerID)}
                       </TableCell>
+                      {role === "Admin" && (
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(building)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Chỉnh sửa
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -182,23 +217,33 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
           {selectedBuilding && (
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Thông tin tòa nhà</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                  Thông tin tòa nhà
+                </h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Mã tòa nhà:</span>
-                    <span className="font-medium">{selectedBuilding.buildingID}</span>
+                    <span className="font-medium">
+                      {selectedBuilding.buildingID}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Địa chỉ:</span>
-                    <span className="font-medium">{selectedBuilding.address || "N/A"}</span>
+                    <span className="font-medium">
+                      {selectedBuilding.address || "N/A"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Số căn hộ:</span>
-                    <span className="font-medium">{selectedBuilding.numApartment || 0}</span>
+                    <span className="font-medium">
+                      {selectedBuilding.numApartment || 0}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Quản lý hiện tại:</span>
-                    <span className="font-medium">{getManagerName(selectedBuilding.managerID)}</span>
+                    <span className="font-medium">
+                      {getManagerName(selectedBuilding.managerID)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -211,13 +256,15 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
                   onChange={(e) => setNewManagerId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {managers.length == 0
-                    ? <option value="">-- Không có quản lý --</option>
-                    : managers.map((manager) => (
-                    <option key={manager.managerID} value={manager.managerID}>
-                      {manager.fullName} (ID: {manager.managerID})
-                    </option>
-                  ))}
+                  {managers.length == 0 ? (
+                    <option value="">-- Không có quản lý --</option>
+                  ) : (
+                    managers.map((manager) => (
+                      <option key={manager.managerID} value={manager.managerID}>
+                        {manager.name} (ID: {manager.managerID})
+                      </option>
+                    ))
+                  )}
                 </select>
                 <p className="text-xs text-gray-500">
                   Chọn quản lý mới cho tòa nhà này hoặc để trống để bỏ quản lý

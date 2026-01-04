@@ -3,11 +3,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 import { ShieldAlert, Calculator, Plus, Pencil, Trash2 } from "lucide-react";
-import { api, type Accountant, type AccountantCreate, type AccountantUpdate } from "../../services/api";
+import {
+  api,
+  type Accountant,
+  type AccountantCreate,
+  type AccountantUpdate,
+} from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
@@ -22,20 +50,19 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedAccountant, setSelectedAccountant] = useState<Accountant | null>(null);
+  const [selectedAccountant, setSelectedAccountant] =
+    useState<Accountant | null>(null);
 
   // Form states
   const [createForm, setCreateForm] = useState<AccountantCreate>({
-    fullName: "",
+    fullname: "",
     phoneNumber: "",
-    email: "",
     username: "",
   });
 
   const [editForm, setEditForm] = useState<AccountantUpdate>({
-    fullName: "",
+    fullname: "",
     phoneNumber: "",
-    email: "",
     username: "",
   });
 
@@ -66,9 +93,8 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
       toast.success("Thêm kế toán thành công");
       setCreateDialogOpen(false);
       setCreateForm({
-        fullName: "",
+        fullname: "",
         phoneNumber: "",
-        email: "",
         username: "",
       });
       loadAccountants();
@@ -107,9 +133,8 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
   const openEditDialog = (accountant: Accountant) => {
     setSelectedAccountant(accountant);
     setEditForm({
-      fullName: accountant.fullName,
+      fullname: accountant.fullname,
       phoneNumber: accountant.phoneNumber,
-      email: accountant.email,
       username: accountant.username,
     });
     setEditDialogOpen(true);
@@ -159,11 +184,13 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="create-fullName">Họ tên *</Label>
+                  <Label htmlFor="create-fullname">Họ tên *</Label>
                   <Input
-                    id="create-fullName"
-                    value={createForm.fullName}
-                    onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
+                    id="create-fullname"
+                    value={createForm.fullname}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, fullname: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -172,16 +199,12 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
                   <Input
                     id="create-phoneNumber"
                     value={createForm.phoneNumber}
-                    onChange={(e) => setCreateForm({ ...createForm, phoneNumber: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-email">Email</Label>
-                  <Input
-                    id="create-email"
-                    type="email"
-                    value={createForm.email}
-                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        phoneNumber: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -189,14 +212,24 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
                   <Input
                     id="create-username"
                     value={createForm.username}
-                    onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, username: e.target.value })
+                    }
                   />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  <Button
+                    type="button"
+                    className="cursor-pointer"
+                    variant="outline"
+                    onClick={() => setCreateDialogOpen(false)}
+                  >
                     Hủy
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                  <Button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                  >
                     Thêm kế toán
                   </Button>
                 </div>
@@ -217,19 +250,24 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
                   <TableRow className="bg-blue-50">
                     <TableHead className="text-blue-900">ID</TableHead>
                     <TableHead className="text-blue-900">Họ tên</TableHead>
-                    <TableHead className="text-blue-900">Số điện thoại</TableHead>
-                    <TableHead className="text-blue-900">Email</TableHead>
+                    <TableHead className="text-blue-900">
+                      Số điện thoại
+                    </TableHead>
                     <TableHead className="text-blue-900">Tài khoản</TableHead>
-                    <TableHead className="text-blue-900 text-right">Hành động</TableHead>
+                    <TableHead className="text-blue-900 text-right">
+                      Hành động
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {accountants.map((accountant) => (
                     <TableRow key={accountant.accountantID}>
                       <TableCell>{accountant.accountantID}</TableCell>
-                      <TableCell>{accountant.fullName || "N/A"}</TableCell>
+                      <TableCell>
+                        {accountant.fullname ||
+                          `Kế toán ${accountant.accountantID}`}
+                      </TableCell>
                       <TableCell>{accountant.phoneNumber || "N/A"}</TableCell>
-                      <TableCell>{accountant.email || "N/A"}</TableCell>
                       <TableCell>{accountant.username || "N/A"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -266,16 +304,18 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
           <DialogHeader>
             <DialogTitle>Chỉnh sửa kế toán</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin kế toán {selectedAccountant?.fullName}
+              Cập nhật thông tin kế toán {selectedAccountant?.fullname}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-fullName">Họ tên *</Label>
+              <Label htmlFor="edit-fullname">Họ tên *</Label>
               <Input
-                id="edit-fullName"
-                value={editForm.fullName}
-                onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                id="edit-fullname"
+                value={editForm.fullname}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, fullname: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -283,16 +323,9 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
               <Input
                 id="edit-phoneNumber"
                 value={editForm.phoneNumber}
-                onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, phoneNumber: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -300,14 +333,24 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
               <Input
                 id="edit-username"
                 value={editForm.username}
-                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, username: e.target.value })
+                }
               />
             </div>
             <div className="flex justify-end gap-3">
-              <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button
+                type="button"
+                className="cursor-pointer"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+              >
                 Hủy
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              >
                 Cập nhật
               </Button>
             </div>
@@ -321,13 +364,18 @@ export function AccountantsTab({ role }: AccountantsTabProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa kế toán</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa kế toán "{selectedAccountant?.fullName}" không?
-              Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa kế toán "{selectedAccountant?.fullname}"
+              không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 cursor-pointer">
+            <AlertDialogCancel className="cursor-pointer">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 cursor-pointer"
+            >
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>

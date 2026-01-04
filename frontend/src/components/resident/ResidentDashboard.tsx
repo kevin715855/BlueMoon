@@ -4,6 +4,7 @@ import { ResidentBillsTab } from "./ResidentBillsTab";
 import { ResidentPaymentsTab } from "./ResidentPaymentsTab";
 import { ResidentOverviewTab } from "./ResidentOverviewTab";
 import { AccountManagementTab } from "../admin/AccountManagementTab";
+import { ResidentNotificationTab } from "./ResidentNotificationTab";
 
 interface ResidentDashboardProps {
   username: string;
@@ -33,6 +34,7 @@ export function ResidentDashboard({ username, role, onLogout }: ResidentDashboar
 
         <div className="p-8">
           {activeTab === "dashboard" && <ResidentOverviewTab />}
+          {activeTab === "notifications" && <ResidentNotificationTab />}
           {activeTab === "bills" && <ResidentBillsTab />}
           {activeTab === "payments" && <ResidentPaymentsTab />}
           {activeTab === "accounts" && <AccountManagementTab role={role}/>}

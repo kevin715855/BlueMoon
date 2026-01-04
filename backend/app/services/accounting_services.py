@@ -1,10 +1,12 @@
-import datetime as dt
+from datetime import datetime, date
 from decimal import Decimal, ROUND_HALF_UP
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.app.models.service_fee import ServiceFee
 from backend.app.models.apartment import Apartment
 from backend.app.models.bill import Bill
+from backend.app.schemas.bill import BillCreate
 from backend.app.models.meter_reading import MeterReading
 
 from backend.app.models.transaction_detail import TransactionDetail
@@ -49,7 +51,14 @@ class AccountingService:
     @staticmethod
     def calculate_monthly_bills(db: Session, month: int, year: int, accountant_id: int, deadline_day: int, overwrite: bool = False):
         """Tính toán và tạo hóa đơn cho 3 luồng: Điện, Nước, Phí dịch vụ"""
-        deadline_date = dt.date(year, month, deadline_day)
+        if month==12: 
+            month_dl = 1
+            year_dl = year + 1
+        else:
+            month_dl=month
+            year_dl=year
+        
+        deadline_date = date(year_dl, month_dl, deadline_day)
 
         existing_bills = db.query(Bill).filter(
             Bill.deadline == deadline_date,
@@ -94,7 +103,7 @@ class AccountingService:
                     bill_elec = Bill(
                         apartmentID=apt.apartmentID, 
                         accountantID=accountant_id,
-                        createDate=dt.datetime.now(),
+                        createDate=datetime.now(),
                         deadline=deadline_date,
                         typeOfBill="ELECTRICITY",
                         amount=elec_total,
@@ -114,7 +123,7 @@ class AccountingService:
                     bill_water = Bill(
                         apartmentID=apt.apartmentID,
                         accountantID=accountant_id,
-                        createDate=dt.datetime.now(),
+                        createDate=datetime.now(),
                         deadline=deadline_date,
                         typeOfBill="WATER",
                         amount=water_total,
@@ -134,7 +143,7 @@ class AccountingService:
                 bill_service = Bill(
                     apartmentID=apt.apartmentID,
                     accountantID=accountant_id,
-                    createDate=dt.datetime.now(),
+                    createDate=datetime.now(),
                     deadline=deadline_date,
                     typeOfBill="SERVICE",
                     amount=service_sum,
@@ -167,6 +176,40 @@ class AccountingService:
             msg = f"Tạo mới {fee_data.serviceName} thành công."
         db.commit()
         return msg
+    
+    @staticmethod
+    def create_manual_bill(db: Session, data: BillCreate, accountant_id: int):
+        """
+        Dùng cho: Sửa chữa, Phạt, Dịch vụ riêng lẻ...
+        Logic: Tạo bill -> Lưu DB -> Thông báo riêng cho căn hộ đó.
+        """
+        createDate = datetime.now()
+        month = createDate.month
+        year = createDate.year
+
+        new_bill = Bill(
+            apartmentID=data.apartmentID,
+            accountantID=accountant_id,
+            createDate=createDate,
+            deadline=data.deadline,
+            typeOfBill=data.typeOfBill,
+            amount=data.amount,
+            total=data.amount,
+            status='Unpaid'
+        )
+        db.add(new_bill)
+        db.commit()
+        db.refresh(new_bill)
+
+        NotificationService.notify_new_bill(
+            db=db, 
+            bill_id=new_bill.billID,
+            month=month,
+            year=year 
+        )
+        
+        return new_bill
+
 
     @staticmethod
     def get_all_bills(db: Session, apartment_id=None, status=None):
@@ -181,3 +224,25 @@ class AccountingService:
             Bill.apartmentID, func.sum(Bill.total).label("total_unpaid"), func.count(Bill.billID).label("bill_count")
         ).filter(Bill.status == "Unpaid").group_by(Bill.apartmentID).all()
         return [{"apartmentID": r.apartmentID, "total_unpaid": float(r.total_unpaid), "bill_count": r.bill_count} for r in results]
+    
+    @staticmethod
+    def delete_service_fee(db: Session, service_name: str, building_id: str):
+        """Xóa đơn giá phí dịch vụ"""
+        existing_fee = db.query(ServiceFee).filter(
+            ServiceFee.serviceName == service_name,
+            ServiceFee.buildingID == building_id
+        ).first()
+
+        if not existing_fee:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Không tìm thấy dịch vụ '{service_name}' tại tòa nhà {building_id}"
+            )
+
+        try:
+            db.delete(existing_fee)
+            db.commit()
+            return f"Đã xóa dịch vụ {service_name} thành công."
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Lỗi khi xóa: {str(e)}")

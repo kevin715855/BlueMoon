@@ -53,11 +53,23 @@ export const Permissions = {
 
   // Offline Payments - Only Accountant and Admin
   canManageOfflinePayments: (role: UserRole): boolean => {
-    return role === "Accountant" || role === "Admin";
+    return role === "Accountant";
   },
 
   // Receipts - Only Accountant and Admin
   canViewReceipts: (role: UserRole): boolean => {
-    return role === "Accountant" || role === "Admin";
+    return role === "Accountant";
+  },
+
+  canManageAccounting: (role: UserRole): boolean => {
+    return role === "Accountant";
+  },
+
+  canViewNotifications: (role: UserRole): boolean => {
+    return role === "Resident";
+  },
+
+  canBroadcastNotifications: (role: UserRole): boolean => {
+    return role === "Manager" || role === "Admin";
   },
 };

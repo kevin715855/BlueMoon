@@ -15,7 +15,7 @@ BANK_ID = os.getenv("BANK_ID", "MB")
 BANK_ACCOUNT = os.getenv("BANK_ACCOUNT", "")
 TEMPLATE = os.getenv("BANK_TEMPLATE", "compact2")
 
-class PaymentService:
+class OfflinePaymentService:
     
     # TẠO GIAO DỊCH & SINH QR
     @staticmethod
@@ -45,7 +45,7 @@ class PaymentService:
             new_trans = PaymentTransaction(
                 residentID=user_id,
                 amount=total_amount,
-                paymentMethod="Online_Payment",
+                paymentMethod="Offline Payment",
                 status="Pending",
                 createdDate=datetime.now()
             )
@@ -88,20 +88,12 @@ class PaymentService:
             print(f"[ERROR create_qr_transaction]: {str(e)}")
             raise HTTPException(status_code=500, detail="Lỗi hệ thống khi tạo giao dịch.")
         
-    # XỬ LÝ WEBHOOK TỪ SEPAY
     @staticmethod
-    def process_sepay_webhook(db: Session, content: str, amount_in: float, gateway_id: str, transaction_date: str):
-        """
-        Input: Dữ liệu từ Webhook SePay
-        Output: Kết quả giao dịch
-        """
-        print(f"WEBHOOK RECEIVED: {content} | Amount: {amount_in}")
-
+    def process_webhook(db: Session, content: str, amount_in: float):
         # 1. Regex tìm mã đơn hàng (BM...)
         match = re.search(r"BM(\d+)", content, re.IGNORECASE)
         
         if not match:
-            # Trả về Success=False để SePay biết
             return {"success": False, "message": "Không tìm thấy mã đơn hàng trong nội dung"}
         
         trans_id = int(match.group(1))
@@ -132,7 +124,7 @@ class PaymentService:
                 "success": False, 
                 "message": "Giao dịch đã hết hạn thanh toán."
             }
-        
+
         # 3. Kiểm tra Idempotency
         if transaction.status == 'Success':
             return {"success": True, "message": "Giao dịch này đã được thực hiện"}
@@ -166,7 +158,6 @@ class PaymentService:
             # 5a. Update Transaction
             transaction.status = 'Success'
             transaction.payDate = datetime.now()
-            transaction.gatewayTransCode = str(gateway_id)
             
             # 5b. Update các Bill con thành 'Paid'
             details = db.query(TransactionDetail).filter(TransactionDetail.transID == transaction.transID).all()
@@ -199,23 +190,3 @@ class PaymentService:
             db.rollback()
             print(f"--> Lỗi giao dịch: {e}")
             return {"success": False, "message": f"Lỗi Database: {str(e)}"}
-        
-    @staticmethod
-    def cancel_expired_transactions(db: Session):
-        time_threshold = datetime.now() - timedelta(minutes=15)
-        expired_transactions = db.query(PaymentTransaction).filter(
-            PaymentTransaction.status == "Pending",
-            PaymentTransaction.createdDate < time_threshold
-        ).all()
-
-        count = 0
-        for transaction in expired_transactions:
-            transaction.status = "Expired"
-            count += 1
-        
-        db.commit()
-        
-        return {
-            "message": f"Có {count} giao dịch quá hạn bị hủy.",
-            "canceled_count": count
-        }

@@ -34,14 +34,6 @@ export interface AccountResponse {
   isActive: boolean;
 }
 
-export interface AccountRoleUpdate {
-  role: "Resident" | "Accountant" | "Manager" | "Admin";
-}
-
-export interface AccountPasswordUpdate {
-  newPassword: string;
-}
-
 // Apartment Types
 export interface Apartment {
   apartmentID: string;
@@ -101,29 +93,25 @@ export interface BillCreate {
   deadline: string;
   typeOfBill: string;
   amount: number;
-  total: number;
 }
 
 // Building Manager Types
 export interface BuildingManager {
   managerID: number;
-  fullName: string;
+  name: string;
   phoneNumber?: string;
-  email?: string;
   username?: string;
 }
 
 export interface BuildingManagerCreate {
-  fullName: string;
+  name: string;
   phoneNumber?: string;
-  email?: string;
   username?: string;
 }
 
 export interface BuildingManagerUpdate {
-  fullName?: string;
+  name?: string;
   phoneNumber?: string;
-  email?: string;
   username?: string;
 }
 
@@ -135,30 +123,23 @@ export interface Building {
   numApartment?: number;
 }
 
-export interface BuildingUpdateManager {
-  managerID: number;
-}
-
 // Accountant Types
 export interface Accountant {
   accountantID: number;
-  fullName: string;
+  fullname: string;
   phoneNumber?: string;
-  email?: string;
   username?: string;
 }
 
 export interface AccountantCreate {
-  fullName: string;
+  fullname: string;
   phoneNumber?: string;
-  email?: string;
   username?: string;
 }
 
 export interface AccountantUpdate {
-  fullName?: string;
+  fullname?: string;
   phoneNumber?: string;
-  email?: string;
   username?: string;
 }
 
@@ -173,17 +154,6 @@ export interface PaymentTransaction {
   createdDate?: string;
   payDate?: string;
   gatewayTransCode?: string;
-}
-
-export interface PaymentCreateRequest {
-  bill_ids: number[];
-}
-
-export interface OfflinePaymentRequest {
-  residentID: number;
-  paymentContent: string;
-  paymentMethod?: string;
-  bill_ids: number[];
 }
 
 export interface PaymentResponse {
@@ -252,10 +222,13 @@ export interface MeterReadingCreate {
 
 export interface ServiceFeeCreate {
   buildingID: string;
-  typeOfBill: string;
-  feePerUnit?: number | null;
-  flatFee?: number | null;
-  effectiveDate: string;
+  serviceName: string;
+  unitPrice?: number | null;
+}
+
+export interface ServiceFeeDelete {
+  buildingID: string;
+  serviceName: string;
 }
 
 export interface CalculateBillsRequest {
@@ -263,6 +236,11 @@ export interface CalculateBillsRequest {
   year: number;
   deadline_day?: number;
   overwrite?: boolean;
+}
+
+export interface VerifyTransactionResponse {
+  message: string;
+  success: boolean;
 }
 
 // ==================== API ERROR CLASS ====================
@@ -287,7 +265,7 @@ const getAuthToken = (): string | null => {
 // Generic fetch wrapper
 async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
@@ -306,10 +284,7 @@ async function fetchApi<T>(
     const errorData = await response.json().catch(() => ({
       detail: "An error occurred",
     }));
-    throw new ApiError(
-      response.status,
-      errorData.detail || "Request failed"
-    );
+    throw new ApiError(response.status, errorData.detail || "Request failed");
   }
 
   // Handle 204 No Content responses
@@ -327,7 +302,7 @@ export const api = {
   auth: {
     login: async (
       username: string,
-      password: string
+      password: string,
     ): Promise<LoginResponse> => {
       const response = await fetchApi<LoginResponse>("/auth/login", {
         method: "POST",
@@ -367,7 +342,7 @@ export const api = {
     },
 
     get: async (username: string): Promise<AccountResponse> => {
-      return fetchApi<AccountResponse>(`/accounts/managers/${username}`, {
+      return fetchApi<AccountResponse>(`/accounts/${username}`, {
         method: "GET",
       });
     },
@@ -378,30 +353,14 @@ export const api = {
       });
     },
 
-    updateRole: async (
-      username: string,
-      roleData: AccountRoleUpdate
-    ): Promise<AccountResponse> => {
-      return fetchApi<AccountResponse>(
-        `/accounts/managers/${username}/role`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(roleData),
-        }
-      );
-    },
-
     updatePassword: async (
       username: string,
-      passwordData: AccountPasswordUpdate
+      password: string,
     ): Promise<AccountResponse> => {
-      return fetchApi<AccountResponse>(
-        `/accounts/managers/${username}/password`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(passwordData),
-        }
-      );
+      return fetchApi<AccountResponse>(`/accounts/${username}/password`, {
+        method: "PATCH",
+        body: JSON.stringify({ role: "", password, isActive: true }),
+      });
     },
   },
 
@@ -409,11 +368,11 @@ export const api = {
   apartments: {
     getAll: async (
       skip: number = 0,
-      limit: number = 100
+      limit: number = 100,
     ): Promise<Apartment[]> => {
       return fetchApi<Apartment[]>(
         `/apartments/get-apartments-data?skip=${skip}&limit=${limit}`,
-        { method: "GET" }
+        { method: "GET" },
       );
     },
   },
@@ -422,23 +381,23 @@ export const api = {
   residents: {
     getAll: async (
       skip: number = 0,
-      limit: number = 100
+      limit: number = 100,
     ): Promise<Resident[]> => {
       return fetchApi<Resident[]>(
         `/residents/get-residents-data?skip=${skip}&limit=${limit}`,
-        { method: "GET" }
+        { method: "GET" },
       );
     },
 
     getDetail: async (
       fullname: string,
-      apartmentId: string
+      apartmentId: string,
     ): Promise<Resident> => {
       return fetchApi<Resident>(
         `/residents/resident_detail?fullname=${encodeURIComponent(
-          fullname
+          fullname,
         )}&apartment_id=${encodeURIComponent(apartmentId)}`,
-        { method: "GET" }
+        { method: "GET" },
       );
     },
 
@@ -449,10 +408,7 @@ export const api = {
       });
     },
 
-    update: async (
-      id: number,
-      resident: ResidentUpdate
-    ): Promise<Resident> => {
+    update: async (id: number, resident: ResidentUpdate): Promise<Resident> => {
       return fetchApi<Resident>(`/residents/${id}`, {
         method: "PUT",
         body: JSON.stringify(resident),
@@ -467,11 +423,11 @@ export const api = {
 
     getByApartment: async (apartmentId: string): Promise<Resident[]> => {
       const allResidents = await fetchApi<Resident[]>(
-        `/api/residents/get-residents-data?skip=0&limit=1000`,
-        { method: "GET" }
+        `/residents/get-residents-data?skip=0&limit=1000`,
+        { method: "GET" },
       );
       // Filter by apartment ID on the client side
-      return allResidents.filter(r => r.apartmentID === apartmentId);
+      return allResidents.filter((r) => r.apartmentID === apartmentId);
     },
   },
 
@@ -480,13 +436,6 @@ export const api = {
     getMyBills: async (): Promise<Bill[]> => {
       return fetchApi<Bill[]>("/bills/my-bills", {
         method: "GET",
-      });
-    },
-
-    create: async (bill: BillCreate): Promise<Bill> => {
-      return fetchApi<Bill>("/bills/", {
-        method: "POST",
-        body: JSON.stringify(bill),
       });
     },
   },
@@ -506,7 +455,7 @@ export const api = {
     },
 
     create: async (
-      manager: BuildingManagerCreate
+      manager: BuildingManagerCreate,
     ): Promise<BuildingManager> => {
       return fetchApi<BuildingManager>("/building-managers/", {
         method: "POST",
@@ -516,7 +465,7 @@ export const api = {
 
     update: async (
       id: number,
-      manager: BuildingManagerUpdate
+      manager: BuildingManagerUpdate,
     ): Promise<BuildingManager> => {
       return fetchApi<BuildingManager>(`/building-managers/${id}`, {
         method: "PATCH",
@@ -541,11 +490,12 @@ export const api = {
 
     updateManager: async (
       buildingId: string,
-      data: BuildingUpdateManager
+      managerId: number,
     ): Promise<Building> => {
+      console.log(buildingId, managerId);
       return fetchApi<Building>(`/buildings/${buildingId}/manager`, {
-        method: "PUT",
-        body: JSON.stringify(data),
+        method: "PATCH",
+        body: JSON.stringify({ manager_id: managerId }),
       });
     },
   },
@@ -573,7 +523,7 @@ export const api = {
 
     update: async (
       id: number,
-      accountant: AccountantUpdate
+      accountant: AccountantUpdate,
     ): Promise<Accountant> => {
       return fetchApi<Accountant>(`/accountants/${id}`, {
         method: "PATCH",
@@ -597,12 +547,6 @@ export const api = {
       });
     },
 
-    checkExpiry: async (): Promise<any> => {
-      return fetchApi<any>("/online-payments/check-expiry", {
-        method: "POST",
-      });
-    },
-
     // Get payment history for current user
     getMyHistory: async (): Promise<PaymentTransaction[]> => {
       return fetchApi<PaymentTransaction[]>("/payments/my-history", {
@@ -613,13 +557,30 @@ export const api = {
 
   // ==================== OFFLINE PAYMENTS ====================
   offlinePayments: {
-    create: async (
-      payment: OfflinePaymentRequest
-    ): Promise<PaymentResponse> => {
-      return fetchApi<PaymentResponse>("/offline-payments/offline_payment", {
-        method: "POST",
-        body: JSON.stringify(payment),
-      });
+    createTransaction: async (
+      apartmentId: string,
+      billIds: number[],
+    ): Promise<QRCodeResponse> => {
+      return fetchApi<QRCodeResponse>(
+        `/offline-payments/create-transaction?apartment_id=${apartmentId}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ bill_ids: billIds }),
+        },
+      );
+    },
+
+    verifyTransaction: async (
+      content: string,
+      amount: number,
+    ): Promise<VerifyTransactionResponse> => {
+      return fetchApi<VerifyTransactionResponse>(
+        "/offline-payments/verify-transaction",
+        {
+          method: "POST",
+          body: JSON.stringify({ content, transferAmount: amount }),
+        },
+      );
     },
   },
 
@@ -635,32 +596,37 @@ export const api = {
   // ==================== NOTIFICATIONS ====================
   notifications: {
     // Get my notifications
-    getMyNotifications: async (skip: number = 0, limit: number = 50): Promise<Notification[]> => {
+    getMyNotifications: async (
+      skip: number = 0,
+      limit: number = 50,
+    ): Promise<Notification[]> => {
       return fetchApi<Notification[]>(
-        `/api/notification/my-notification?skip=${skip}&limit=${limit}`,
+        `/notification/my-notification?skip=${skip}&limit=${limit}`,
         {
           method: "GET",
-        }
+        },
       );
     },
 
     // Mark notification as read
     markAsRead: async (id: number): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>(`/api/notification/${id}/read`, {
+      return fetchApi<{ message: string }>(`/notification/${id}/read`, {
         method: "PUT",
       });
     },
 
     // Get unread count
     getUnreadCount: async (): Promise<{ count: number }> => {
-      return fetchApi<{ count: number }>("/api/notification/unread-count", {
+      return fetchApi<{ count: number }>("/notification/unread-count", {
         method: "GET",
       });
     },
 
     // Broadcast notification (Manager/Admin only)
-    broadcast: async (notification: BroadcastNotification): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>("/api/notification/broadcast", {
+    broadcast: async (
+      notification: BroadcastNotification,
+    ): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>("/notification/broadcast", {
         method: "POST",
         body: JSON.stringify(notification),
       });
@@ -670,38 +636,67 @@ export const api = {
   // ==================== ACCOUNTING ====================
   accounting: {
     // Record meter readings
-    recordMeterReading: async (data: MeterReadingCreate): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>("/api/accounting/meter-readings", {
+    recordMeterReading: async (
+      data: MeterReadingCreate,
+    ): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>("/accounting/meter-readings", {
         method: "POST",
         body: JSON.stringify(data),
       });
     },
 
     // Set service fees
-    setServiceFee: async (data: ServiceFeeCreate): Promise<{ message: string }> => {
-      return fetchApi<{ message: string }>("/api/accounting/service-fees", {
+    setServiceFee: async (
+      data: ServiceFeeCreate,
+    ): Promise<{ message: string }> => {
+      return fetchApi<{ message: string }>("/accounting/service-fees", {
         method: "POST",
         body: JSON.stringify(data),
       });
     },
 
+    deleteServiceFee: async ({
+      serviceName,
+      buildingID,
+    }: ServiceFeeDelete): Promise<void> => {
+      return fetchApi<void>(
+        `/accounting/delete-service-fee?service_name=${serviceName}&building_id=${buildingID}`,
+        {
+          method: "DELETE",
+          body: JSON.stringify({}),
+        },
+      );
+    },
+
     // Calculate monthly bills
     calculateBills: async (
-      data: CalculateBillsRequest
+      data: CalculateBillsRequest,
     ): Promise<{ status: string; message: string; count: number }> => {
       return fetchApi<{ status: string; message: string; count: number }>(
-        "/api/accounting/bills/calculate",
+        "/accounting/bills/calculate",
         {
           method: "POST",
           body: JSON.stringify(data),
-        }
+        },
+      );
+    },
+
+    getManualBill: async (
+      billCreateData: BillCreate,
+    ): Promise<{ message: string; billID: number }> => {
+      return fetchApi<{ message: string; billID: number }>(
+        "/accounting/bills/manual",
+        {
+          method: "POST",
+          body: JSON.stringify(billCreateData),
+        },
       );
     },
 
     // Get all bills with optional filters
     getAllBills: async (
       apartmentId?: string,
-      status?: string
+      status?: string,
     ): Promise<Bill[]> => {
       const params = new URLSearchParams();
       if (apartmentId) params.append("apartment_id", apartmentId);

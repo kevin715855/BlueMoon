@@ -52,3 +52,12 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+def SessionLocal():
+    """
+    Hàm này tạo ra một DB Session mới.
+    Dùng cho các tác vụ chạy ngầm (Background Job) 
+    nơi không thể dùng Dependency Injection của FastAPI.
+    """
+    factory = get_sessionmaker()
+    return factory()

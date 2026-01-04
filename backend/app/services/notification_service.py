@@ -31,7 +31,7 @@ class NotificationService:
                 f"- Tổng tiền: {bill.total:,.0f} VNĐ\n"
                 f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}"
             )
-            elec_val = reading.newElectricity
+            elec_val = cons
 
         elif bill.typeOfBill == "WATER":
             title = f"Tiền Nước Tháng {month}/{year}"
@@ -43,7 +43,7 @@ class NotificationService:
                 f"- Tổng tiền: {bill.total:,.0f} VNĐ\n"
                 f"- Hạn thanh toán: {bill.deadline.strftime('%d/%m/%Y')}"
             )
-            water_val = reading.newWater
+            water_val = cons
 
         elif bill.typeOfBill == "SERVICE":
             title = f"Phí Dịch Vụ Tháng {month}/{year}"
@@ -70,26 +70,42 @@ class NotificationService:
     @staticmethod
     def notify_payment_result(db: Session, content: str, resident_id: int, status: str, amount: float, trans_id: int):
         """
-        Tạo thông báo kết quả giao dịch (Thành công / Thất bại).
+        Tạo thông báo kết quả giao dịch.
+        content đầu vào là chuỗi dạng: "ELECTRICITY, WATER"
         """
+        createDate = datetime.now()
+
+        month = createDate.month
+        year = createDate.year
+
+        display_content = content.replace("ELECTRICITY", f"Tiền Điện tháng {month}/{year}") \
+                                 .replace("WATER", f"Tiền Nước tháng {month}/{year}") \
+                                 .replace("SERVICE", f"Phí Dịch Vụ tháng {month}/{year}")
+
         if status == "Success":
             title = "Thanh toán thành công"
-            content = f"Giao dịch {content} của bạn thanh toán thành công."
+            msg_content = f"Giao dịch {display_content} của bạn thanh toán thành công."
+            
         elif status == "Failed":
             title = "Thanh toán thất bại"
-            content = f"Giao dịch {content} thanh toán không thành công. Vui lòng kiểm tra lại số dư hoặc thử lại."
+            msg_content = f"Giao dịch {display_content} thanh toán không thành công. Vui lòng kiểm tra lại số dư hoặc thử lại."
+            
+        elif status == "Expired":
+            title = "Thanh toán thất bại"
+            msg_content = f"Giao dịch {display_content} quá thời hạn thanh toán. Vui lòng thử lại."
+            
         else:
             title = "Lỗi giao dịch"
-            content = f"Có lỗi xảy ra trong quá trình xử lý giao dịch {content}."
+            msg_content = f"Có lỗi xảy ra trong quá trình xử lý giao dịch {display_content}."
 
         noti = Notification(
             residentID=resident_id,
             type="PAYMENT_RESULT",
             title=title,
-            content=content,
+            content=msg_content,
             relatedID=trans_id,
             isRead=False,
-            createdDate=datetime.now()
+            createdDate=createDate
         )
         db.add(noti)
         db.commit()
