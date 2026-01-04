@@ -90,7 +90,7 @@ class NotificationService:
 
         if status == "Success":
             title = "Thanh toán thành công"
-            msg_content = f"Giao dịch {display_content} của bạn thanh toán thành công."
+            msg_content = f"Giao dịch {display_content} của bạn thanh toán thành công {amount}đ."
             
         elif status == "Failed":
             title = "Thanh toán thất bại"
@@ -104,16 +104,26 @@ class NotificationService:
             title = "Lỗi giao dịch"
             msg_content = f"Có lỗi xảy ra trong quá trình xử lý giao dịch {display_content}."
 
-        noti = Notification(
-            residentID=resident_id,
-            type="PAYMENT_RESULT",
-            title=title,
-            content=msg_content,
-            relatedID=trans_id,
-            isRead=False,
-            createdDate=createDate
-        )
-        db.add(noti)
+        current_resident = db.query(Resident).filter(Resident.residentID == resident_id).first()
+        
+        if not current_resident:
+            print(f"Error: Resident ID {resident_id} not found.")
+            return
+        
+        residents = db.query(Resident).filter(Resident.apartmentID == current_resident.apartmentID).all()
+
+        for resident in residents:
+            noti = Notification(
+                residentID=resident.residentID,
+                type="PAYMENT_RESULT",
+                title=title,
+                content=msg_content,
+                relatedID=trans_id,
+                isRead=False,
+                createdDate=createDate
+            )
+            db.add(noti)
+
         db.commit()
 
     @staticmethod
