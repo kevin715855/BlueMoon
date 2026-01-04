@@ -142,9 +142,8 @@ def change_password(
     
     # Hash password mới trước khi cập nhật
     hashed_password = hash_password(password_update.password)
-    account_temp = db.query(Account).fitler(hashed_password == Account.password)
     
-    if account_temp:
+    if account.password == hashed_password:
             raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Mật khẩu mới phải khác với mật khẩu hiện tại"
