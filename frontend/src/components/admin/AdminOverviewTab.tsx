@@ -12,14 +12,11 @@ export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
   const [stats, setStats] = useState({
     totalResidents: 0,
     totalApartments: 0,
+    usedApartments: 0,
     unpaidBills: 0,
     totalAdmins: 0,
   });
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadStats();
-  }, []);
 
   const loadStats = async () => {
     try {
@@ -38,6 +35,9 @@ export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
       setStats({
         totalResidents: residents.length,
         totalApartments: apartments.length,
+        usedApartments: apartments.filter(
+          (apartment) => apartment.numResident != 0,
+        ).length,
         unpaidBills: 0, // Will be updated if we have access to all bills
         totalAdmins,
       });
@@ -47,6 +47,10 @@ export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -85,28 +89,43 @@ export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
           <Card className="border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2 bg-blue-50">
               <CardTitle className="text-sm text-blue-900">
-                Chưa thanh toán
+                Tổng căn hộ
               </CardTitle>
               <FileText className="w-4 h-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-gray-900">{stats.unpaidBills}</div>
-              <p className="text-xs text-gray-500 mt-1">Hóa đơn</p>
+              <div className="text-gray-900">{stats.usedApartments}</div>
+              <p className="text-xs text-gray-500 mt-1">Đang sinh sống</p>
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-blue-50">
-              <CardTitle className="text-sm text-blue-900">
-                Tài khoản quản trị
-              </CardTitle>
-              <UserCog className="w-4 h-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-gray-900">{stats.totalAdmins}</div>
-              <p className="text-xs text-gray-500 mt-1">Quản lý & Kế toán</p>
-            </CardContent>
-          </Card>
+          {role === "Admin" ? (
+            <Card className="border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 bg-blue-50">
+                <CardTitle className="text-sm text-blue-900">
+                  Tài khoản quản trị
+                </CardTitle>
+                <UserCog className="w-4 h-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-gray-900">{stats.totalAdmins}</div>
+                <p className="text-xs text-gray-500 mt-1">Quản lý & Kế toán</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 bg-blue-50">
+                <CardTitle className="text-sm text-blue-900">
+                  Chưa thanh toán
+                </CardTitle>
+                <UserCog className="w-4 h-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-gray-900">{stats.unpaidBills}</div>
+                <p className="text-xs text-gray-500 mt-1">Hóa đơn</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

@@ -368,7 +368,7 @@ export const api = {
   apartments: {
     getAll: async (
       skip: number = 0,
-      limit: number = 100,
+      limit: number = 1000,
     ): Promise<Apartment[]> => {
       return fetchApi<Apartment[]>(
         `/apartments/get-apartments-data?skip=${skip}&limit=${limit}`,
@@ -381,7 +381,7 @@ export const api = {
   residents: {
     getAll: async (
       skip: number = 0,
-      limit: number = 100,
+      limit: number = 1000,
     ): Promise<Resident[]> => {
       return fetchApi<Resident[]>(
         `/residents/get-residents-data?skip=${skip}&limit=${limit}`,
