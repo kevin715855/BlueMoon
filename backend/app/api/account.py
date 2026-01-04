@@ -110,74 +110,20 @@ def delete_account(
         )
 
 
-@router.patch("/managers/{username}/role", response_model=AccountRead, summary="Chỉnh sửa quyền tài khoản")
-def update_manager_role(
-    username: str,
-    role_update: AccountUpdate,
-    db: Session = Depends(get_db),
-    current_manager: TokenData = Depends(get_current_manager)
-):
-    """
-    **Chỉnh sửa quyền (role) của tài khoản**
-    
-    - **username**: Tên đăng nhập của tài khoản cần chỉnh sửa
-    - **role**: Quyền mới (Manager, Accountant, Resident, etc.)
-    
-    **Quyền**: Chỉ Admin
-    
-    **Errors**:
-    - 403: Không có quyền truy cập
-    - 404: Tài khoản không tồn tại
-    - 400: Không thể thay đổi quyền tài khoản Admin
-    """
-    account = db.query(Account).filter(Account.username == username).first()
-    
-    if not account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tài khoản '{username}' không tồn tại"
-        )
-    
-    # Không cho phép thay đổi quyền của Admin
-    if str(account.role) == "Admin":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Không thể thay đổi quyền của tài khoản Admin"
-        )
-    
-    # Cập nhật role nếu có
-    if role_update.role is not None:
-        setattr(account, 'role', role_update.role)
-    
-    try:
-        db.commit()
-        db.refresh(account)
-        return account
-    except IntegrityError as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Lỗi cập nhật quyền: {str(e.orig)}"
-        )
-
-
-@router.patch("/managers/{username}/password", response_model=AccountRead, summary="Đổi mật khẩu")
+@router.patch("/{username}/password", response_model=AccountRead, summary="Đổi mật khẩu")
 def change_password(
     username: str,
     password_update: AccountUpdate,
     db: Session = Depends(get_db),
 ):
     """
-    **Đổi mật khẩu cho tài khoản quản lý**
+    **Đổi mật khẩu cho tài khoản**
     
     - **username**: Tên đăng nhập của tài khoản cần đổi mật khẩu
     - **password**: Mật khẩu mới
     
-    **Quyền**: Chỉ Admin
-    
     **Errors**:
     - 400: Mật khẩu không được cung cấp
-    - 403: Không có quyền truy cập
     - 404: Tài khoản không tồn tại
     """
     if not password_update.password:
@@ -196,6 +142,13 @@ def change_password(
     
     # Hash password mới trước khi cập nhật
     hashed_password = hash_password(password_update.password)
+    account_temp = db.query(Account).fitler(hashed_password == Account.password)
+    
+    if account_temp:
+            raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Mật khẩu mới phải khác với mật khẩu hiện tại"
+                )
     setattr(account, 'password', hashed_password)
     
     try:
@@ -210,18 +163,13 @@ def change_password(
         )
 
 
-@router.get("/managers/{username}", response_model=AccountRead, summary="Xem chi tiết tài khoản")
-def get_manager_detail(
+@router.get("/{username}", response_model=AccountRead, summary="Xem chi tiết tài khoản")
+def get_account_detail(
     username: str,
     db: Session = Depends(get_db),
-    current_manager: TokenData = Depends(get_current_manager)
 ):
     """
-    **Xem chi tiết một tài khoản quản lý**
-    
     - **username**: Tên đăng nhập của tài khoản cần xem
-    
-    **Quyền**: Chỉ Admin
     
     **Errors**:
     - 403: Không có quyền truy cập
