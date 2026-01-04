@@ -8,7 +8,7 @@ from backend.app.models.building_manager import BuildingManager
 from backend.app.models.resident import Resident
 from backend.app.models.accountant import Accountant
 from backend.app.schemas.account import AccountCreate, AccountUpdate, AccountRead
-from backend.app.core.security import create_access_token, hash_password
+from backend.app.core.security import create_access_token, hash_password, verify_password
 # Import Auth
 from backend.app.api.auth import get_current_manager
 from backend.app.schemas.auth import TokenData
@@ -140,14 +140,14 @@ def change_password(
             detail=f"Tài khoản '{username}' không tồn tại"
         )
     
+    if verify_password(password_update, account.password):
+        raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Mật khẩu mới phải khác với mật khẩu hiện tại"
+            )
+    
     # Hash password mới trước khi cập nhật
     hashed_password = hash_password(password_update.password)
-    
-    if account.password == hashed_password:
-            raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Mật khẩu mới phải khác với mật khẩu hiện tại"
-                )
     setattr(account, 'password', hashed_password)
     
     try:
