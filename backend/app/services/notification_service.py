@@ -77,6 +77,12 @@ class NotificationService:
 
         month = createDate.month
         year = createDate.year
+        if month==1: 
+            month = 12
+            year = year - 1
+        else:
+            month=month
+            year=year
 
         display_content = content.replace("ELECTRICITY", f"Tiền Điện tháng {month}/{year}") \
                                  .replace("WATER", f"Tiền Nước tháng {month}/{year}") \

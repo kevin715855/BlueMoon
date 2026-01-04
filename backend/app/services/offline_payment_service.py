@@ -104,7 +104,7 @@ class OfflinePaymentService:
         if not transaction:
             return {"success": False, "message": f"Không tìm thấy Transaction ID {trans_id}"}
 
-        time_limit = timedelta(minutes=1)
+        time_limit = timedelta(minutes=15)
         
         if datetime.now() - transaction.createdDate > time_limit:
             
