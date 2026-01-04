@@ -159,42 +159,53 @@ export function AccountManagementTab({ role }: AccountManagementTabProps) {
                   <Label htmlFor="role" className="text-gray-700">
                     Vai trò <span className="text-red-500">*</span>
                   </Label>
-                  <Select
-                    value={createForm.role}
-                    onValueChange={(value) =>
-                      setCreateForm({ ...createForm, role: value as UserRole })
-                    }
-                  >
-                    <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Chọn vai trò" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Resident">
-                        <div className="flex items-center gap-2">
-                          <span>👤</span>
-                          <span>Cư dân</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Accountant">
-                        <div className="flex items-center gap-2">
-                          <span>🧮</span>
-                          <span>Kế toán</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Manager">
-                        <div className="flex items-center gap-2">
-                          <span>📋</span>
-                          <span>Quản lý</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Admin">
-                        <div className="flex items-center gap-2">
-                          <span>👑</span>
-                          <span>Quản trị viên</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                  {role === "Admin" ? (
+                    <Select
+                      value={createForm.role}
+                      onValueChange={(value) =>
+                        setCreateForm({
+                          ...createForm,
+                          role: value as UserRole,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue placeholder="Chọn vai trò" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Resident">
+                          <div className="flex items-center gap-2">
+                            <span>👤</span>
+                            <span>Cư dân</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Accountant">
+                          <div className="flex items-center gap-2">
+                            <span>🧮</span>
+                            <span>Kế toán</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Manager">
+                          <div className="flex items-center gap-2">
+                            <span>📋</span>
+                            <span>Quản lý</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Admin">
+                          <div className="flex items-center gap-2">
+                            <span>👑</span>
+                            <span>Quản trị viên</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex items-center">
+                      <span>👤 </span>
+                      <span>Cư dân</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Password Field */}
