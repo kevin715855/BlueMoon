@@ -23,3 +23,9 @@ def get_bills_data(
     my_bills = db.query(Bill).filter(Bill.apartmentID==resident.apartmentID).all()
     return my_bills
 
+@router.get("/bills-unpaid", response_model=List[BillRead])
+def get_unpaid_bills(
+    db: Session = Depends(get_db),
+):
+    my_bills = db.query(Bill).filter(Bill.status == "Unpaid").all()
+    return my_bills
