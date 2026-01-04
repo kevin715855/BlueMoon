@@ -175,7 +175,7 @@ export interface ReceiptBillDetail {
   billID: number;
   billName: string;
   amount: number;
-  dueDate: string;
+  deadlineDate: string;
 }
 
 export interface Receipt {
@@ -186,6 +186,7 @@ export interface Receipt {
   phoneNumber?: string;
   totalAmount: number;
   paymentMethod: string;
+  paymentType: string;
   paymentContent?: string;
   status: string;
   payDate: string;
