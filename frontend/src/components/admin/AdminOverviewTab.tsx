@@ -21,13 +21,19 @@ export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
   const loadStats = async () => {
     try {
       // Fetch data in parallel
-      const [residents, apartments, buildingManagers, accountants] =
-        await Promise.all([
-          api.residents.getAll(0, 1000),
-          api.apartments.getAll(0, 1000),
-          api.buildingManagers.getAll(),
-          api.accountants.getAll(),
-        ]);
+      const [
+        residents,
+        apartments,
+        buildingManagers,
+        accountants,
+        unpaidBills,
+      ] = await Promise.all([
+        api.residents.getAll(0, 1000),
+        api.apartments.getAll(0, 1000),
+        api.buildingManagers.getAll(),
+        api.accountants.getAll(),
+        api.bills.getUnpaid(),
+      ]);
 
       // Count total admins (managers + accountants)
       const totalAdmins = buildingManagers.length + accountants.length;
@@ -38,7 +44,7 @@ export function AdminOverviewTab({ role }: AdminOverviewTabProps) {
         usedApartments: apartments.filter(
           (apartment) => apartment.numResident != 0,
         ).length,
-        unpaidBills: 0, // Will be updated if we have access to all bills
+        unpaidBills: unpaidBills.length,
         totalAdmins,
       });
     } catch (error) {

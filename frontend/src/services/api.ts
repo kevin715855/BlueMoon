@@ -435,9 +435,11 @@ export const api = {
   // ==================== BILLS ====================
   bills: {
     getMyBills: async (): Promise<Bill[]> => {
-      return fetchApi<Bill[]>("/bills/my-bills", {
-        method: "GET",
-      });
+      return fetchApi<Bill[]>("/bills/my-bills", { method: "GET" });
+    },
+
+    getUnpaid: async (): Promise<Bill[]> => {
+      return fetchApi<Bill[]>("/bills/bills-unpaid", { method: "GET" });
     },
   },
 
