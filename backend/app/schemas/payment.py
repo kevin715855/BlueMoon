@@ -235,7 +235,7 @@ class ReceiptBillDetail(BaseModel):
     billID: int
     billName: str
     amount: float
-    dueDate: str
+    deadlineDate: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -248,9 +248,11 @@ class ReceiptResponse(BaseModel):
     phoneNumber: str | None
     totalAmount: float
     paymentMethod: str
+    paymentType: str
     paymentContent: str | None
     status: str
     payDate: str
+    deadlineDate: str | None
     bills: list[ReceiptBillDetail]
 
     model_config = ConfigDict(from_attributes=True)

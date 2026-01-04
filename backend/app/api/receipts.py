@@ -59,17 +59,31 @@ def get_receipt(
     ).all()
     
     bills_data = []
+    bill_deadlines = []
     if transaction_details:
         bill_ids = [getattr(td, 'billID') for td in transaction_details]
         bills = db.query(Bill).filter(Bill.billID.in_(bill_ids)).all()
         
         for bill in bills:
+            bill_deadline = getattr(bill, 'deadline', None)
+            if bill_deadline:
+                bill_deadlines.append(bill_deadline)
             bills_data.append(ReceiptBillDetail(
                 billID=getattr(bill, 'billID'),
-                billName=str(getattr(bill, 'billName', '')),
+                billName=str(getattr(bill, 'billName', None) or getattr(bill, 'typeOfBill', '') or ''),
                 amount=float(getattr(bill, 'amount', 0)),
-                dueDate=str(getattr(bill, 'dueDate', ''))
+                deadlineDate=str(bill_deadline) if bill_deadline else ""
             ))
+
+    payment_method = str(getattr(transaction, 'paymentMethod', '') or '')
+    normalized_method = payment_method.strip().lower()
+    if not normalized_method:
+        payment_type = "Unknown"
+    elif "offline" in normalized_method:
+        payment_type = "Offline"
+    else:
+        payment_type = "Online"
+    deadline_date = str(min(bill_deadlines)) if bill_deadlines else None
     
     return ReceiptResponse(
         transID=getattr(transaction, 'transID'),
@@ -78,10 +92,12 @@ def get_receipt(
         apartmentID=str(getattr(resident, 'apartmentID', '')),
         phoneNumber=str(getattr(resident, 'phoneNumber', None)) if getattr(resident, 'phoneNumber', None) else None,
         totalAmount=float(getattr(transaction, 'amount', 0)),
-        paymentMethod=str(getattr(transaction, 'paymentMethod', '')),
+        paymentMethod=payment_method,
+        paymentType=payment_type,
         paymentContent=str(getattr(transaction, 'paymentContent', None)) if getattr(transaction, 'paymentContent', None) else None,
         status=str(getattr(transaction, 'status', '')),
         payDate=str(getattr(transaction, 'payDate', '')),
+        deadlineDate=deadline_date,
         bills=bills_data
     )
 
@@ -206,11 +222,30 @@ def get_receipt_pdf(
         elements.append(Spacer(1, 0.2*inch))
         
         bill_data = [['STT', 'Mã HĐ', 'Loại hóa đơn', 'Số tiền']]
+
+        
+        createDate = datetime.now()
+
+        month = createDate.month
+        year = createDate.year
+        if month==1: 
+            month = 12
+            year = year - 1
+        else:
+            month=month
+            year=year            
+            
+        bill_data = [['STT', 'Mã HĐ', 'Loại hóa đơn', 'Số tiền']]
         for idx, bill in enumerate(bills, 1):
+            content = bill.typeOfBill.replace("ELECTRICITY", f"Tiền Điện tháng {month}/{year}") \
+                                 .replace("WATER", f"Tiền Nước tháng {month}/{year}") \
+                                 .replace("SERVICE", f"Phí Dịch Vụ tháng {month}/{year}")
+            
+            print(content)
             bill_data.append([
                 str(idx),
                 f"#{getattr(bill, 'billID')}",
-                str(getattr(bill, 'typeOfBill', '')),
+                content,
                 f"{float(getattr(bill, 'amount', 0)):,.0f} VNĐ"
             ])
         

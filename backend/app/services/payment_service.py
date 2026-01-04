@@ -45,7 +45,7 @@ class PaymentService:
             new_trans = PaymentTransaction(
                 residentID=user_id,
                 amount=total_amount,
-                paymentMethod="Online_Payment",
+                paymentMethod="Online Payment",
                 status="Pending",
                 createdDate=datetime.now()
             )
@@ -112,7 +112,7 @@ class PaymentService:
         if not transaction:
             return {"success": False, "message": f"Không tìm thấy Transaction ID {trans_id}"}
 
-        time_limit = timedelta(minutes=1)
+        time_limit = timedelta(minutes=15)
         
         if datetime.now() - transaction.createdDate > time_limit:
             

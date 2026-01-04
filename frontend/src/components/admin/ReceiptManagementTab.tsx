@@ -3,12 +3,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
-import { ShieldAlert, Receipt as ReceiptIcon, Search, Download, FileText } from "lucide-react";
-import { api, type Receipt } from "../../services/api";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  ShieldAlert,
+  Receipt as ReceiptIcon,
+  Search,
+  Download,
+  FileText,
+} from "lucide-react";
+import { api, type Receipt, type ReceiptBillDetail } from "../../services/api";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
+import { subMonths } from "date-fns";
 
 interface ReceiptManagementTabProps {
   role: string;
@@ -64,11 +84,11 @@ export function ReceiptManagementTab({ role }: ReceiptManagementTabProps) {
     // Add authorization header via fetch and download
     fetch(url, {
       headers: {
-        "Authorization": `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
-      .then(response => response.blob())
-      .then(blob => {
+      .then((response) => response.blob())
+      .then((blob) => {
         const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = blobUrl;
@@ -79,16 +99,34 @@ export function ReceiptManagementTab({ role }: ReceiptManagementTabProps) {
         window.URL.revokeObjectURL(blobUrl);
         toast.success("Đang tải xuống biên lai PDF");
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Download error:", error);
         toast.error("Không thể tải xuống PDF");
       });
   };
 
+  const toBillTypeString = (bill: ReceiptBillDetail) => {
+    const deadline = new Date(bill.deadlineDate!);
+
+    const lastMonth = subMonths(deadline, 1);
+    const month = lastMonth.getMonth() + 1;
+    const year = lastMonth.getFullYear();
+
+    if (bill.billName === "SERVICE") {
+      return `Phí Dịch Vụ Tháng ${month}/${year}`;
+    } else if (bill.billName === "WATER") {
+      return `Tiền Nước Tháng ${month}/${year}`;
+    } else if (bill.billName === "ELECTRICITY") {
+      return `Tiền Điện Tháng ${month}/${year}`;
+    } else {
+      return bill.billName;
+    }
+  };
+
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
-      currency: "VND"
+      currency: "VND",
     }).format(amount);
   };
 
@@ -99,8 +137,6 @@ export function ReceiptManagementTab({ role }: ReceiptManagementTabProps) {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit"
       });
     } catch {
       return dateString;
@@ -169,11 +205,14 @@ export function ReceiptManagementTab({ role }: ReceiptManagementTabProps) {
                 <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="space-y-2">
                   <p className="text-sm text-blue-900">
-                    <strong>Hướng dẫn:</strong> Nhập mã giao dịch để tra cứu và xem biên lai thanh toán.
+                    <strong>Hướng dẫn:</strong> Nhập mã giao dịch để tra cứu và
+                    xem biên lai thanh toán.
                   </p>
                   <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
                     <li>Có thể tải xuống biên lai dưới dạng PDF</li>
-                    <li>Biên lai bao gồm thông tin cư dân và chi tiết hóa đơn</li>
+                    <li>
+                      Biên lai bao gồm thông tin cư dân và chi tiết hóa đơn
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -199,92 +238,129 @@ export function ReceiptManagementTab({ role }: ReceiptManagementTabProps) {
             <div className="space-y-6">
               {/* Transaction Info */}
               <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <h3 className="text-sm font-semibold text-blue-900 mb-3">Thông tin giao dịch</h3>
+                <h3 className="text-sm font-semibold text-blue-900 mb-3">
+                  Thông tin giao dịch
+                </h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-gray-600">Mã giao dịch:</span>
-                    <p className="font-medium text-gray-900">#{receipt.transID}</p>
+                    <p className="font-medium text-gray-900">
+                      #{receipt.transID}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Trạng thái:</span>
                     <p className="font-medium">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                        receipt.status === "Success"
-                          ? "bg-green-100 text-green-800"
-                          : receipt.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                          receipt.status === "Success"
+                            ? "bg-green-100 text-green-800"
+                            : receipt.status === "Pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                        }`}
+                      >
                         {receipt.status}
                       </span>
                     </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Ngày thanh toán:</span>
-                    <p className="font-medium text-gray-900">{formatDate(receipt.payDate)}</p>
+                    <p className="font-medium text-gray-900">
+                      {formatDate(receipt.payDate)}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Phương thức:</span>
-                    <p className="font-medium text-gray-900">{
-                      receipt.paymentMethod != "Offline" ? "Online" : receipt.paymentMethod || "N/A"
-                    }</p>
+                    <p className="font-medium text-gray-900">
+                      {receipt.paymentMethod.slice(0, -8)}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Resident Info */}
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Thông tin cư dân</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  Thông tin cư dân
+                </h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-gray-600">Họ tên:</span>
-                    <p className="font-medium text-gray-900">{receipt.residentName}</p>
+                    <p className="font-medium text-gray-900">
+                      {receipt.residentName}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Mã cư dân:</span>
-                    <p className="font-medium text-gray-900">#{receipt.residentID}</p>
+                    <p className="font-medium text-gray-900">
+                      #{receipt.residentID}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Căn hộ:</span>
-                    <p className="font-medium text-gray-900">{receipt.apartmentID}</p>
+                    <p className="font-medium text-gray-900">
+                      {receipt.apartmentID}
+                    </p>
                   </div>
                   <div>
                     <span className="text-gray-600">Số điện thoại:</span>
-                    <p className="font-medium text-gray-900">{receipt.phoneNumber || "N/A"}</p>
+                    <p className="font-medium text-gray-900">
+                      {receipt.phoneNumber || "N/A"}
+                    </p>
                   </div>
                 </div>
                 {receipt.paymentContent && (
                   <div className="mt-3">
-                    <span className="text-gray-600 text-sm">Nội dung thanh toán:</span>
-                    <p className="font-medium text-gray-900 text-sm mt-1">{receipt.paymentContent}</p>
+                    <span className="text-gray-600 text-sm">
+                      Nội dung thanh toán:
+                    </span>
+                    <p className="font-medium text-gray-900 text-sm mt-1">
+                      {receipt.paymentContent}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Bills Table */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Chi tiết hóa đơn ({receipt.bills.length})</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  Chi tiết hóa đơn ({receipt.bills.length})
+                </h3>
                 <div className="border rounded-lg overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-blue-50">
                         <TableHead className="text-blue-900">Mã HĐ</TableHead>
-                        <TableHead className="text-blue-900">Loại hóa đơn</TableHead>
-                        <TableHead className="text-blue-900">Hạn thanh toán</TableHead>
-                        <TableHead className="text-blue-900 text-right">Số tiền</TableHead>
+                        <TableHead className="text-blue-900">
+                          Loại hóa đơn
+                        </TableHead>
+                        <TableHead className="text-blue-900">
+                          Hạn thanh toán
+                        </TableHead>
+                        <TableHead className="text-blue-900 text-right">
+                          Số tiền
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {receipt.bills.map((bill) => (
-                        <TableRow key={bill.billID}>
-                          <TableCell className="font-medium">#{bill.billID}</TableCell>
-                          <TableCell>{bill.billName}</TableCell>
-                          <TableCell>{formatDate(bill.dueDate)}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(bill.amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {receipt.bills.map((bill) => {
+                        console.log(bill);
+                        return (
+                          <TableRow key={bill.billID}>
+                            <TableCell className="font-medium">
+                              #{bill.billID}
+                            </TableCell>
+                            <TableCell>{toBillTypeString(bill)}</TableCell>
+                            <TableCell>
+                              {formatDate(bill.deadlineDate)}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrency(bill.amount)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -293,7 +369,9 @@ export function ReceiptManagementTab({ role }: ReceiptManagementTabProps) {
               {/* Total */}
               <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-900">TỔNG CỘNG:</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    TỔNG CỘNG:
+                  </span>
                   <span className="text-2xl font-bold text-green-700">
                     {formatCurrency(receipt.totalAmount)}
                   </span>
