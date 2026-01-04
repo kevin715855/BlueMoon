@@ -1,13 +1,27 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
 import { CheckCircle, Clock, XCircle, QrCode, CreditCard } from "lucide-react";
 import { api, type PaymentTransaction, type Bill } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { toast } from "sonner";
+import { subMonths } from "date-fns";
 
 export function ResidentPaymentsTab() {
   const [payments, setPayments] = useState<PaymentTransaction[]>([]);
@@ -17,7 +31,26 @@ export function ResidentPaymentsTab() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
 
+  const unpaidBillsInOrder = [...unpaidBills].reverse();
   const paymentsInOrder = [...payments].reverse();
+
+  const toBillTypeString = (bill: Bill) => {
+    const deadline = new Date(bill.deadline!);
+
+    const lastMonth = subMonths(deadline, 1);
+    const month = lastMonth.getMonth() + 1;
+    const year = lastMonth.getFullYear();
+
+    if (bill.typeOfBill === "SERVICE") {
+      return `Phí Dịch Vụ Tháng ${month}/${year}`;
+    } else if (bill.typeOfBill === "WATER") {
+      return `Tiền Nước Tháng ${month}/${year}`;
+    } else if (bill.typeOfBill === "ELECTRICITY") {
+      return `Tiền Điện Tháng ${month}/${year}`;
+    } else {
+      return bill.typeOfBill;
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -31,7 +64,9 @@ export function ResidentPaymentsTab() {
       ]);
 
       setPayments(paymentData.slice(0, 10));
-      setUnpaidBills(billData.filter((b) => b.status === "Unpaid" || b.status === "Overdue"));
+      setUnpaidBills(
+        billData.filter((b) => b.status === "Unpaid" || b.status === "Overdue"),
+      );
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {
@@ -60,7 +95,7 @@ export function ResidentPaymentsTab() {
     setSelectedBills((prev) =>
       prev.includes(billId)
         ? prev.filter((id) => id !== billId)
-        : [...prev, billId]
+        : [...prev, billId],
     );
   };
 
@@ -109,11 +144,13 @@ export function ResidentPaymentsTab() {
       {unpaidBills.length > 0 && (
         <Card className="shadow-lg border-blue-200">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-            <CardTitle className="py-2 text-white">Hóa đơn chưa thanh toán</CardTitle>
+            <CardTitle className="py-2 text-white">
+              Hóa đơn chưa thanh toán
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              {unpaidBills.map((bill) => (
+              {unpaidBillsInOrder.map((bill) => (
                 <div
                   key={bill.billID}
                   className="flex items-center justify-between p-4 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
@@ -128,10 +165,13 @@ export function ResidentPaymentsTab() {
                     />
                     <div>
                       <p>
-                        #{bill.billID} - {bill.typeOfBill}
+                        #{bill.billID} - {toBillTypeString(bill)}
                       </p>
                       <p className="text-sm text-gray-500">
-                        Hạn: {bill.deadline ? new Date(bill.deadline).toLocaleDateString("vi-VN") : "N/A"}
+                        Hạn:{" "}
+                        {bill.deadline
+                          ? new Date(bill.deadline).toLocaleDateString("vi-VN")
+                          : "N/A"}
                       </p>
                     </div>
                   </div>
@@ -168,36 +208,48 @@ export function ResidentPaymentsTab() {
               <p className="text-gray-500 text-center">Chưa có giao dịch nào</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-blue-50">
-                  <TableHead className="text-blue-900">Mã giao dịch</TableHead>
-                  <TableHead className="text-blue-900">Nội dung</TableHead>
-                  <TableHead className="text-blue-900">Phương thức</TableHead>
-                  <TableHead className="text-blue-900">Số tiền</TableHead>
-                  <TableHead className="text-blue-900">Ngày thanh toán</TableHead>
-                  <TableHead className="text-blue-900">Trạng thái</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paymentsInOrder.map((payment) => (
-                  <TableRow key={payment.transID}>
-                    <TableCell>#{payment.transID}</TableCell>
-                    <TableCell>{payment.paymentContent || "N/A"}</TableCell>
-                    <TableCell>{
-                      payment.paymentMethod != "Offline" ? "Online" : payment.paymentMethod || "N/A"
-                    }</TableCell>
-                    <TableCell>{payment.amount.toLocaleString("vi-VN")} ₫</TableCell>
-                    <TableCell>
-                      {payment.payDate
-                        ? new Date(payment.payDate).toLocaleDateString("vi-VN")
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-blue-50">
+                    <TableHead className="text-blue-900">
+                      Mã giao dịch
+                    </TableHead>
+                    <TableHead className="text-blue-900">Nội dung</TableHead>
+                    <TableHead className="text-blue-900">Phương thức</TableHead>
+                    <TableHead className="text-blue-900">Số tiền</TableHead>
+                    <TableHead className="text-blue-900">
+                      Ngày thanh toán
+                    </TableHead>
+                    <TableHead className="text-blue-900">Trạng thái</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paymentsInOrder.map((payment) => (
+                    <TableRow key={payment.transID}>
+                      <TableCell>#{payment.transID}</TableCell>
+                      <TableCell>{payment.paymentContent || "N/A"}</TableCell>
+                      <TableCell>
+                        {payment.paymentMethod != "Offline"
+                          ? "Online"
+                          : payment.paymentMethod || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {payment.amount.toLocaleString("vi-VN")} ₫
+                      </TableCell>
+                      <TableCell>
+                        {payment.payDate
+                          ? new Date(payment.payDate).toLocaleDateString(
+                              "vi-VN",
+                            )
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -206,7 +258,9 @@ export function ResidentPaymentsTab() {
       <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-center text-blue-900">Mã QR Thanh Toán</DialogTitle>
+            <DialogTitle className="text-center text-blue-900">
+              Mã QR Thanh Toán
+            </DialogTitle>
             <DialogDescription className="text-center text-gray-500">
               Quét mã QR để thanh toán hóa đơn
             </DialogDescription>

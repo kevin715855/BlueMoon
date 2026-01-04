@@ -2,9 +2,28 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { ShieldAlert, Search, CreditCard, QrCode, Wallet, Building2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  ShieldAlert,
+  Search,
+  CreditCard,
+  QrCode,
+  Wallet,
+  Building2,
+} from "lucide-react";
 import { Badge } from "../ui/badge";
 import { api, type Bill, type Apartment } from "../../services/api";
 import { Permissions, type UserRole } from "../../utils/permissions";
@@ -28,7 +47,9 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
 
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"qr" | "direct" | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"qr" | "direct" | null>(
+    null,
+  );
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
 
@@ -72,11 +93,16 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
 
     try {
       // Get all bills for the apartment with status filter
-      const bills = await api.accounting.getAllBills(apartmentId.trim(), "Unpaid");
+      const bills = await api.accounting.getAllBills(
+        apartmentId.trim(),
+        "Unpaid",
+      );
       setUnpaidBills(bills);
 
       if (bills.length === 0) {
-        toast.info(`Không tìm thấy hóa đơn chưa thanh toán cho căn hộ ${apartmentId}`);
+        toast.info(
+          `Không tìm thấy hóa đơn chưa thanh toán cho căn hộ ${apartmentId}`,
+        );
       } else {
         toast.success(`Tìm thấy ${bills.length} hóa đơn chưa thanh toán`);
       }
@@ -92,7 +118,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
     setSelectedBills((prev) =>
       prev.includes(billId)
         ? prev.filter((id) => id !== billId)
-        : [...prev, billId]
+        : [...prev, billId],
     );
   };
 
@@ -131,10 +157,16 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
   const handleDirectPayment = async () => {
     setProcessingPayment(true);
     try {
-      const { transaction_id, trans_code, total_amount }= await api.offlinePayments.createQR(selectedBills);
-      const verifyMessage = await api.offlinePayments.verifyTransaction(trans_code, total_amount);
+      const { transaction_id, trans_code, total_amount } =
+        await api.offlinePayments.createTransaction(selectedBills);
+      const verifyMessage = await api.offlinePayments.verifyTransaction(
+        trans_code,
+        total_amount,
+      );
       if (verifyMessage.success) {
-        toast.success(`Thanh toán thành công! Mã giao dịch: #${transaction_id}`);
+        toast.success(
+          `Thanh toán thành công! Mã giao dịch: #${transaction_id}`,
+        );
       }
 
       // Reset and refresh
@@ -151,7 +183,7 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
 
   const calculateTotal = () => {
     return unpaidBills
-      .filter(bill => selectedBills.includes(bill.billID))
+      .filter((bill) => selectedBills.includes(bill.billID))
       .reduce((sum, bill) => sum + (bill.total || 0), 0);
   };
 
@@ -165,7 +197,9 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
               <Building2 className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-white">Thanh toán ngoại tuyến</CardTitle>
+              <CardTitle className="text-white">
+                Thanh toán ngoại tuyến
+              </CardTitle>
               <p className="text-blue-100 text-sm mt-1">
                 Tìm kiếm và xử lý thanh toán cho căn hộ
               </p>
@@ -188,7 +222,10 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {apartments.map((apartment) => (
-                    <SelectItem key={apartment.apartmentID} value={apartment.apartmentID}>
+                    <SelectItem
+                      key={apartment.apartmentID}
+                      value={apartment.apartmentID}
+                    >
                       {apartment.apartmentID}
                     </SelectItem>
                   ))}
@@ -225,7 +262,8 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-white">
-                  Hóa đơn chưa thanh toán {apartmentId && `- Căn hộ ${apartmentId}`}
+                  Hóa đơn chưa thanh toán{" "}
+                  {apartmentId && `- Căn hộ ${apartmentId}`}
                 </CardTitle>
                 <p className="text-blue-100 text-sm mt-1">
                   {unpaidBills.length} hóa đơn được tìm thấy
@@ -270,7 +308,9 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                           <p className="text-sm text-gray-500">
                             Hạn thanh toán:{" "}
                             {bill.deadline
-                              ? new Date(bill.deadline).toLocaleDateString("vi-VN")
+                              ? new Date(bill.deadline).toLocaleDateString(
+                                  "vi-VN",
+                                )
                               : "N/A"}
                           </p>
                         </div>
@@ -280,7 +320,9 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                           {(bill.total || 0).toLocaleString("vi-VN")} ₫
                         </p>
                         {bill.status === "Overdue" && (
-                          <span className="text-xs text-red-600 font-medium">Quá hạn</span>
+                          <span className="text-xs text-red-600 font-medium">
+                            Quá hạn
+                          </span>
                         )}
                       </div>
                     </div>
@@ -319,7 +361,10 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
               Chọn phương thức thanh toán
             </DialogTitle>
             <DialogDescription className="text-center text-gray-500">
-              Tổng thanh toán: <span className="font-bold text-blue-600">{calculateTotal().toLocaleString("vi-VN")} ₫</span>
+              Tổng thanh toán:{" "}
+              <span className="font-bold text-blue-600">
+                {calculateTotal().toLocaleString("vi-VN")} ₫
+              </span>
             </DialogDescription>
           </DialogHeader>
 
@@ -335,7 +380,9 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                   <div className="bg-blue-100 rounded-full p-4 mb-4 group-hover:bg-blue-200 transition-colors">
                     <QrCode className="w-12 h-12 text-blue-600" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Thanh toán QR</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    Thanh toán QR
+                  </h3>
                   <p className="text-sm text-gray-600 text-center">
                     Tạo mã QR để cư dân quét và thanh toán
                   </p>
@@ -349,7 +396,9 @@ export function OfflinePaymentsTab({ role }: OfflinePaymentsTabProps) {
                   <div className="bg-green-100 rounded-full p-4 mb-4 group-hover:bg-green-200 transition-colors">
                     <Wallet className="w-12 h-12 text-green-600" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Thanh toán trực tiếp</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    Thanh toán trực tiếp
+                  </h3>
                   <p className="text-sm text-gray-600 text-center">
                     Xác nhận thanh toán bằng tiền mặt
                   </p>

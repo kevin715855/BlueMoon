@@ -3,11 +3,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 import { ShieldAlert, ClipboardList, Plus, Pencil, Trash2 } from "lucide-react";
-import { api, type BuildingManager, type BuildingManagerCreate, type BuildingManagerUpdate } from "../../services/api";
+import {
+  api,
+  type BuildingManager,
+  type BuildingManagerCreate,
+  type BuildingManagerUpdate,
+} from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { Permissions, type UserRole } from "../../utils/permissions";
 import { toast } from "sonner";
@@ -22,20 +50,19 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedManager, setSelectedManager] = useState<BuildingManager | null>(null);
+  const [selectedManager, setSelectedManager] =
+    useState<BuildingManager | null>(null);
 
   // Form states
   const [createForm, setCreateForm] = useState<BuildingManagerCreate>({
-    fullName: "",
+    name: "",
     phoneNumber: "",
-    email: "",
     username: "",
   });
 
   const [editForm, setEditForm] = useState<BuildingManagerUpdate>({
-    fullName: "",
+    name: "",
     phoneNumber: "",
-    email: "",
     username: "",
   });
 
@@ -66,9 +93,8 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
       toast.success("Thêm quản lý tòa nhà thành công");
       setCreateDialogOpen(false);
       setCreateForm({
-        fullName: "",
+        name: "",
         phoneNumber: "",
-        email: "",
         username: "",
       });
       loadManagers();
@@ -107,9 +133,8 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
   const openEditDialog = (manager: BuildingManager) => {
     setSelectedManager(manager);
     setEditForm({
-      fullName: manager.fullName,
+      name: manager.name,
       phoneNumber: manager.phoneNumber,
-      email: manager.email,
       username: manager.username,
     });
     setEditDialogOpen(true);
@@ -142,7 +167,9 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
     <div className="space-y-4">
       <Card className="shadow-lg border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg flex flex-row items-center justify-between">
-          <CardTitle className="py-4 text-white">Danh sách quản lý tòa nhà</CardTitle>
+          <CardTitle className="py-4 text-white">
+            Danh sách quản lý tòa nhà
+          </CardTitle>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-white text-blue-600 hover:bg-blue-50 cursor-pointer">
@@ -159,11 +186,13 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="create-fullName">Họ tên *</Label>
+                  <Label htmlFor="create-name">Họ tên *</Label>
                   <Input
-                    id="create-fullName"
-                    value={createForm.fullName}
-                    onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
+                    id="create-name"
+                    value={createForm.name}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -172,16 +201,12 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                   <Input
                     id="create-phoneNumber"
                     value={createForm.phoneNumber}
-                    onChange={(e) => setCreateForm({ ...createForm, phoneNumber: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-email">Email</Label>
-                  <Input
-                    id="create-email"
-                    type="email"
-                    value={createForm.email}
-                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        phoneNumber: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -189,14 +214,24 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                   <Input
                     id="create-username"
                     value={createForm.username}
-                    onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, username: e.target.value })
+                    }
                   />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  <Button
+                    type="button"
+                    className="cursor-pointer"
+                    variant="outline"
+                    onClick={() => setCreateDialogOpen(false)}
+                  >
                     Hủy
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                  <Button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                  >
                     Thêm quản lý
                   </Button>
                 </div>
@@ -208,7 +243,9 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
           {managers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <ClipboardList className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-gray-500 text-center">Không có quản lý tòa nhà nào</p>
+              <p className="text-gray-500 text-center">
+                Không có quản lý tòa nhà nào
+              </p>
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
@@ -217,19 +254,21 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
                   <TableRow className="bg-blue-50">
                     <TableHead className="text-blue-900">ID</TableHead>
                     <TableHead className="text-blue-900">Họ tên</TableHead>
-                    <TableHead className="text-blue-900">Số điện thoại</TableHead>
-                    <TableHead className="text-blue-900">Email</TableHead>
+                    <TableHead className="text-blue-900">
+                      Số điện thoại
+                    </TableHead>
                     <TableHead className="text-blue-900">Tài khoản</TableHead>
-                    <TableHead className="text-blue-900 text-right">Hành động</TableHead>
+                    <TableHead className="text-blue-900 text-right">
+                      Hành động
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {managers.map((manager) => (
                     <TableRow key={manager.managerID}>
                       <TableCell>{manager.managerID}</TableCell>
-                      <TableCell>{manager.fullName || "N/A"}</TableCell>
+                      <TableCell>{manager.name || "N/A"}</TableCell>
                       <TableCell>{manager.phoneNumber || "N/A"}</TableCell>
-                      <TableCell>{manager.email || "N/A"}</TableCell>
                       <TableCell>{manager.username || "N/A"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -266,16 +305,18 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
           <DialogHeader>
             <DialogTitle>Chỉnh sửa quản lý tòa nhà</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin quản lý {selectedManager?.fullName}
+              Cập nhật thông tin quản lý {selectedManager?.name}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-fullName">Họ tên *</Label>
+              <Label htmlFor="edit-name">Họ tên *</Label>
               <Input
-                id="edit-fullName"
-                value={editForm.fullName}
-                onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -283,16 +324,9 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
               <Input
                 id="edit-phoneNumber"
                 value={editForm.phoneNumber}
-                onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, phoneNumber: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -300,14 +334,24 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
               <Input
                 id="edit-username"
                 value={editForm.username}
-                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, username: e.target.value })
+                }
               />
             </div>
             <div className="flex justify-end gap-3">
-              <Button type="button" className="cursor-pointer" variant="outline" onClick={() => setEditDialogOpen(false)}>
+              <Button
+                type="button"
+                className="cursor-pointer"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+              >
                 Hủy
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              >
                 Cập nhật
               </Button>
             </div>
@@ -321,13 +365,18 @@ export function BuildingManagersTab({ role }: BuildingManagersTabProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa quản lý tòa nhà</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa quản lý "{selectedManager?.fullName}" không?
+              Bạn có chắc chắn muốn xóa quản lý "{selectedManager?.name}" không?
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 cursor-pointer">
+            <AlertDialogCancel className="cursor-pointer">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 cursor-pointer"
+            >
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
