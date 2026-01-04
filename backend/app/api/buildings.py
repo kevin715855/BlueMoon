@@ -10,7 +10,7 @@ from backend.app.core.db import get_db
 from backend.app.models.building import Building
 from backend.app.models.building_manager import BuildingManager
 from backend.app.schemas.building import BuildingRead, BuildingUpdate
-from backend.app.api.auth import get_current_manager
+from backend.app.api.auth import get_current_manager, get_only_admin
 from backend.app.schemas.auth import TokenData
 
 router = APIRouter()
@@ -47,12 +47,12 @@ def get_manager_buildings(
     return buildings
 
 
-@router.put("/{building_id}/manager", response_model=BuildingRead, summary="Cập nhật quản lý cho tòa nhà")
+@router.patch("/{building_id}/manager", response_model=BuildingRead, summary="Cập nhật quản lý cho tòa nhà")
 def update_building_manager_assignment(
     building_id: str,
     manager_id: int | None = None,
     db: Session = Depends(get_db),
-    current_manager: TokenData = Depends(get_current_manager)
+    admin: TokenData = Depends(get_only_admin)
 ):
     """
     **Cập nhật/Thay đổi quản lý phụ trách cho một tòa nhà**
@@ -71,7 +71,7 @@ def update_building_manager_assignment(
     if not building:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy tòa nhà có ID '{building_id}'"
+            detail=f"Không tìm thấy tòa nhà '{building_id}'"
         )
     
     # Nếu manager_id không phải None, kiểm tra manager có tồn tại không
