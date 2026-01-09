@@ -18,7 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { ShieldAlert, Building as BuildingIcon, Edit } from "lucide-react";
+
+import { ShieldAlert, Building as BuildingIcon, Edit, RefreshCw} from "lucide-react";
 import { api, type Building, type BuildingManager } from "../../services/api";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
 import { Permissions, type UserRole } from "../../utils/permissions";
@@ -66,6 +67,10 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
           console.log(`No buildings for manager ${manager.managerID}`);
         }
       }
+
+      allBuildings.sort((a, b) => 
+        String(a.buildingID).localeCompare(String(b.buildingID))
+      );
 
       setBuildings(allBuildings);
     } catch (error: any) {
@@ -135,9 +140,24 @@ export function BuildingManagementTab({ role }: BuildingManagementTabProps) {
     <div className="space-y-4">
       <Card className="shadow-lg border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-          <CardTitle className="py-2 text-white flex items-center gap-2">
-            Quản lý tòa nhà
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            
+            <CardTitle className="py-2 text-white flex items-center gap-2">
+              Quản lý tòa nhà
+            </CardTitle>
+
+            <Button
+              onClick={loadData}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+              className="gap-2 cursor-pointer bg-white/20 border-white/40 text-white hover:bg-white/30 hover:text-white border-transparent"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Làm mới
+            </Button>
+
+          </div>
         </CardHeader>
         <CardContent>
           {loading && buildings.length === 0 ? (
