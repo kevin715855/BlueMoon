@@ -56,3 +56,13 @@ class BuildingManagerRead(BuildingManagerBase):
     model_config = ConfigDict(from_attributes=True)
 
     managerID: int = Field(..., description="ID của quản lý")
+
+class BuildingManagerAssignment(BaseModel):
+    managerID: int | None = Field(
+        default=None, 
+        description="ID quản lý (gửi null để bỏ quản lý)",
+        alias="manager_id"
+    ) 
+
+    class Config:
+        populate_by_name = True

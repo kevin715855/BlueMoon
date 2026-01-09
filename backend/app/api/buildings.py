@@ -9,7 +9,8 @@ from typing import List
 from backend.app.core.db import get_db
 from backend.app.models.building import Building
 from backend.app.models.building_manager import BuildingManager
-from backend.app.schemas.building import BuildingRead, BuildingUpdate
+from backend.app.schemas.building import BuildingRead
+from backend.app.schemas.building_manager import BuildingManagerAssignment
 from backend.app.api.auth import get_current_manager, get_only_admin
 from backend.app.schemas.auth import TokenData
 
@@ -50,7 +51,7 @@ def get_manager_buildings(
 @router.patch("/{building_id}/manager", response_model=BuildingRead, summary="Cập nhật quản lý cho tòa nhà")
 def update_building_manager_assignment(
     building_id: str,
-    manager_id: int | None = None,
+    payload: BuildingManagerAssignment,
     db: Session = Depends(get_db),
     admin: TokenData = Depends(get_only_admin)
 ):
@@ -68,6 +69,8 @@ def update_building_manager_assignment(
     # Kiểm tra building có tồn tại không
     building = db.query(Building).filter(Building.buildingID == building_id).first()
     
+    new_manager_id = payload.managerID
+
     if not building:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -75,17 +78,17 @@ def update_building_manager_assignment(
         )
     
     # Nếu manager_id không phải None, kiểm tra manager có tồn tại không
-    if manager_id is not None:
-        manager = db.query(BuildingManager).filter(BuildingManager.managerID == manager_id).first()
+    if new_manager_id is not None:
+        manager = db.query(BuildingManager).filter(BuildingManager.managerID == new_manager_id).first()
         
         if not manager:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Không tìm thấy quản lý có ID {manager_id}"
+                detail=f"Không tìm thấy quản lý có ID {new_manager_id}"
             )
     
     # Cập nhật managerID cho building
-    setattr(building, 'managerID', manager_id)
+    building.managerID = new_manager_id
     
     try:
         db.commit()
